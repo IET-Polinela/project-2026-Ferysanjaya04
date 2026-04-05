@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Laporan - Smart City Issue Reporting</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+        }
+        
+        .badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #667eea;
+            font-weight: 600;
+            padding: 8px 12px;
+        }
+        
+        .nav-links a:hover {
+            color: #764ba2;
+        }
+        
+        .btn-add {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .btn-add:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        thead th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        tbody td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+            color: #333;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .category {
+            display: inline-block;
+            background: #cfe2ff;
+            color: #084298;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status.REPORTED {
+            background: #cce5ff;
+            color: #004085;
+        }
+        
+        .status.IN_PROGRESS {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.RESOLVED {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.REJECTED {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        
+        .btn-view {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background: #764ba2;
+        }
+        
+        .btn-edit {
+            background: #ffc107;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background: #e0a800;
+        }
+        
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background: #c82333;
+        }
+        
+        .empty-message {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+        
+        .empty-message a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-top">
+                <h1>📋 Daftar Semua Laporan</h1>
+                <div class="badge">Total: {{ total_reports }} Laporan</div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="nav-links">
+                <a href="/">🏠 Home</a>
+            </div>
+            
+            <a href="/reports/add/" class="btn-add">+ Buat Laporan Baru</a>
+            
+            {% if reports %}
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Judul</th>
+                                <th>Kategori</th>
+                                <th>Lokasi</th>
+                                <th>Status</th>
+                                <th>Tanggal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in reports %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ report.title }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="category">{{ report.get_category_display }}</span>
+                                    </td>
+                                    <td>{{ report.location }}</td>
+                                    <td>
+                                        <span class="status {{ report.status }}">{{ report.get_status_display }}</span>
+                                    </td>
+                                    <td>{{ report.created_at|date:"d M Y" }}</td>
+                                    <td>
+                                        <div class="actions">
+                                            <a href="/reports/{{ report.id }}/" class="btn-small btn-view">Lihat</a>
+                                            <a href="/reports/{{ report.id }}/edit/" class="btn-small btn-edit">Edit</a>
+                                            <a href="/reports/{{ report.id }}/delete/" class="btn-small btn-delete">Hapus</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-message">
+                    <p>Belum ada laporan. <a href="/reports/add/">Buat laporan baru</a></p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

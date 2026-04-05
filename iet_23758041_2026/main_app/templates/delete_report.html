@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hapus Laporan - Smart City Issue Reporting</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .confirmation-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .report-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .report-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .report-detail {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .btn-confirm {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-confirm:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ Hapus Laporan</h1>
+            <p>Tindakan ini tidak dapat dibatalkan</p>
+        </div>
+        
+        <div class="content">
+            <div class="confirmation-message">
+                Apakah Anda yakin ingin menghapus laporan ini?
+            </div>
+            
+            <div class="report-info">
+                <div class="report-title">{{ report.title }}</div>
+                <div class="report-detail">📁 <strong>Kategori:</strong> {{ report.get_category_display }}</div>
+                <div class="report-detail">📍 <strong>Lokasi:</strong> {{ report.location }}</div>
+                <div class="report-detail">📅 <strong>Dibuat:</strong> {{ report.created_at|date:"d M Y H:i" }}</div>
+                <div class="report-detail">
+                    <strong>Status:</strong> 
+                    {% if report.status == 'REPORTED' %}
+                        <span style="color: #004085;">Dilaporkan</span>
+                    {% elif report.status == 'IN_PROGRESS' %}
+                        <span style="color: #856404;">Sedang Diproses</span>
+                    {% elif report.status == 'RESOLVED' %}
+                        <span style="color: #155724;">Selesai</span>
+                    {% else %}
+                        <span style="color: #721c24;">Ditolak</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <div class="button-group">
+                    <button type="submit" class="btn btn-confirm">🗑️ Ya, Hapus</button>
+                    <a href="/reports/{{ report.id }}/" class="btn btn-cancel">← Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

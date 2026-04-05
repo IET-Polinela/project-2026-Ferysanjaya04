@@ -48,38 +48,6 @@
             padding: 30px;
         }
         
-        .user-info {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .user-info p {
-            color: #333;
-            margin: 5px 0;
-        }
-        
-        .logout-btn {
-            background: #667eea;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-        
-        .logout-btn:hover {
-            background: #764ba2;
-        }
-        
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -142,6 +110,19 @@
         
         .btn-secondary:hover {
             background: #5a6268;
+        }
+        
+        .reports-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
         }
         
         .report-card {
@@ -228,14 +209,13 @@
         }
         
         .btn-small {
-            padding: 8px 15px;
+            padding: 6px 12px;
             font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
             text-decoration: none;
             display: inline-block;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s;
         }
         
         .btn-view {
@@ -256,8 +236,9 @@
         .nav-links {
             display: flex;
             gap: 20px;
-            justify-content: center;
             margin-bottom: 20px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 15px;
         }
         
         .nav-links a {
@@ -270,83 +251,22 @@
         .nav-links a:hover {
             color: #764ba2;
         }
-        
-        .reports-section {
-            margin-top: 40px;
-        }
-        
-        .reports-section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 10px;
-        }
-        
-        .reports-grid {
-            display: grid;
-            gap: 20px;
-        }
-        
-        .btn-edit {
-            background: #28a745;
-            color: white;
-        }
-        
-        .btn-edit:hover {
-            background: #218838;
-        }
-        
-        .btn-delete {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .btn-delete:hover {
-            background: #c82333;
-        }
-        
-        .bottom-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
-            flex-wrap: wrap;
-        }
-        
-        .bottom-buttons a {
-            background: #667eea;
-            color: white;
-            padding: 12px 25px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        
-        .bottom-buttons a:hover {
-            background: #764ba2;
-            transform: translateY(-2px);
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <div>
-                    <h1>🏙️ Smart City Issue Reporting</h1>
-                    <p>Sistem Pelaporan Masalah Kota</p>
-                </div>
-                <div style="text-align: right; color: white;">
-                    <p style="margin-bottom: 5px;">👤 {{ user.username }}</p>
-                    <a href="{% url 'logout' %}" style="color: white; text-decoration: none; font-weight: 600; background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 5px; display: inline-block;">Logout</a>
-                </div>
-            </div>
+            <h1>🏙️ Smart City Issue Reporting</h1>
+            <p>Sistem Pelaporan Masalah Kota</p>
         </div>
         
         <div class="content">
             <div class="nav-links">
                 <a href="/">🏠 Home</a>
                 <a href="/reports/">📋 Daftar Laporan</a>
+                <a href="/users/">👥 Daftar User</a>
+                <a href="/about/">ℹ️ About</a>
+                <a href="/contacts/">📞 Contacts</a>
             </div>
             
             <div class="stats">
@@ -385,11 +305,6 @@
                     <p>Belum ada laporan. <a href="/reports/add/" style="color: #667eea;">Buat laporan baru</a></p>
                 </div>
             {% endif %}
-            
-            <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #dee2e6; display: flex; gap: 15px; justify-content: center;">
-                <a href="/about/" style="padding: 12px 25px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#764ba2'" onmouseout="this.style.background='#667eea'">ℹ️ About</a>
-                <a href="/contacts/" style="padding: 12px 25px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#764ba2'" onmouseout="this.style.background='#667eea'">📞 Contacts</a>
-            </div>
         </div>
     </div>
 </body>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Laporan - Smart City Issue Reporting</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #667eea;
+            font-weight: 600;
+            padding: 8px 12px;
+        }
+        
+        .nav-links a:hover {
+            color: #764ba2;
+        }
+        
+        .detail-section {
+            margin-bottom: 20px;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .category {
+            display: inline-block;
+            background: #cfe2ff;
+            color: #084298;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .status.REPORTED {
+            background: #cce5ff;
+            color: #004085;
+        }
+        
+        .status.IN_PROGRESS {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.RESOLVED {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.REJECTED {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .description-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        
+        .btn-edit {
+            background: #ffc107;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background: #e0a800;
+        }
+        
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background: #c82333;
+        }
+        
+        .btn-back {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-back:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ report.title }}</h1>
+            <span class="category">{{ report.get_category_display }}</span>
+        </div>
+        
+        <div class="content">
+            <div class="nav-links">
+                <a href="/">🏠 Home</a>
+                <a href="/reports/">📋 Daftar Laporan</a>
+            </div>
+            
+            <div class="detail-section">
+                <div class="detail-label">Status</div>
+                <div class="detail-value">
+                    <span class="status {{ report.status }}">{{ report.get_status_display }}</span>
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <div class="detail-label">Kategori</div>
+                <div class="detail-value">{{ report.get_category_display }}</div>
+            </div>
+            
+            <div class="detail-section">
+                <div class="detail-label">Lokasi</div>
+                <div class="detail-value">📍 {{ report.location }}</div>
+            </div>
+            
+            <div class="detail-section">
+                <div class="detail-label">Deskripsi</div>
+                <div class="description-box">{{ report.description }}</div>
+            </div>
+            
+            <div class="detail-section">
+                <div class="detail-label">Tanggal Laporan</div>
+                <div class="detail-value">{{ report.created_at|date:"d M Y H:i" }}</div>
+            </div>
+            
+            <div class="detail-section">
+                <div class="detail-label">Terakhir Diubah</div>
+                <div class="detail-value">{{ report.updated_at|date:"d M Y H:i" }}</div>
+            </div>
+            
+            <div class="button-group">
+                <a href="/reports/{{ report.id }}/edit/" class="btn btn-edit">✏️ Edit Laporan</a>
+                <a href="/reports/{{ report.id }}/delete/" class="btn btn-delete">🗑️ Hapus Laporan</a>
+                <a href="/reports/" class="btn btn-back">← Kembali</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
