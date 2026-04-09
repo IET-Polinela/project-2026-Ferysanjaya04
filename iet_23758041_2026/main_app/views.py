@@ -1,7 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.views import View
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
 from .models import Report
 from .forms import ReportForm, LoginForm, RegisterForm
 
@@ -65,54 +69,81 @@ def home(request):
     return render(request, 'home.html', context)
 
 
-@login_required(login_url='login')
-def report_list(request):
-    reports = Report.objects.all()
-    context = {
-        'reports': reports,
-        'total_reports': reports.count()
-    }
-    return render(request, 'report_list.html', context)
+# Class-Based Views untuk CRUD Report
+class ReportListView(LoginRequiredMixin, ListView):
+    model = Report
+    template_name = 'report_list.html'
+    context_object_name = 'reports'
+    login_url = 'login'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['total_reports'] = Report.objects.count()
+        return context
 
 
-@login_required(login_url='login')
-def report_detail(request, id):
-    report = get_object_or_404(Report, id=id)
-    return render(request, 'report_detail.html', {'report': report})
+class ReportDetailView(LoginRequiredMixin, DetailView):
+    model = Report
+    template_name = 'report_detail.html'
+    context_object_name = 'report'
+    pk_url_kwarg = 'id'
+    login_url = 'login'
 
 
-@login_required(login_url='login')
-def add_report(request):
-    if request.method == "POST":
-        form = ReportForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Laporan berhasil dibuat!')
-            return redirect('home')
-    else:
-        form = ReportForm()
-    return render(request, 'add_report.html', {'form': form})
+class ReportCreateView(LoginRequiredMixin, CreateView):
+    model = Report
+    form_class = ReportForm
+    template_name = 'add_report.html'
+    success_url = reverse_lazy('home')
+    login_url = 'login'
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Laporan berhasil dibuat!')
+        return super().form_valid(form)
 
 
-@login_required(login_url='login')
-def edit_report(request, id):
-    report = get_object_or_404(Report, id=id)
-    if request.method == "POST":
-        form = ReportForm(request.POST, instance=report)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Laporan berhasil diperbarui!')
-            return redirect('report_detail', id=report.id)
-    else:
-        form = ReportForm(instance=report)
-    return render(request, 'edit_report.html', {'form': form, 'report': report})
+class ReportUpdateView(LoginRequiredMixin, UpdateView):
+    model = Report
+    form_class = ReportForm
+    template_name = 'edit_report.html'
+    pk_url_kwarg = 'id'
+    login_url = 'login'
+    
+    def get_success_url(self):
+        messages.success(self.request, 'Laporan berhasil diperbarui!')
+        return reverse_lazy('report_detail', kwargs={'id': self.object.id})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['report'] = self.object
+        return context
 
 
-@login_required(login_url='login')
-def delete_report(request, id):
-    report = get_object_or_404(Report, id=id)
-    if request.method == "POST":
-        report.delete()
+class ReportDeleteView(LoginRequiredMixin, DeleteView):
+    model = Report
+    template_name = 'delete_report.html'
+    success_url = reverse_lazy('report_list')
+    pk_url_kwarg = 'id'
+    login_url = 'login'
+    
+    def delete(self, request, *args, **kwargs):
         messages.success(request, 'Laporan berhasil dihapus!')
-        return redirect('report_list')
-    return render(request, 'delete_report.html', {'report': report})
+        return super().delete(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['report'] = self.object
+        return context
+
+
+class ReportUpdateStatusView(View):
+    """View untuk mengubah status laporan"""
+    def post(self, request, id):
+        report = get_object_or_404(Report, id=id)
+        new_status = request.POST.get('status')
+        
+        if new_status and new_status in dict(Report.STATUS_CHOICES):
+            report.status = new_status
+            report.save()
+        
+        return redirect('report_detail', id=report.id)

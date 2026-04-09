@@ -13,7 +13,7 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1A237E 0%, #3F51B5 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -23,12 +23,12 @@
             margin: 0 auto;
             background: white;
             border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(26, 35, 126, 0.3);
             overflow: hidden;
         }
         
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1A237E 0%, #3F51B5 100%);
             color: white;
             padding: 40px 30px;
             text-align: center;
@@ -46,6 +46,64 @@
         
         .content {
             padding: 30px;
+            display: flex;
+            gap: 30px;
+        }
+        
+        .main-area {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .sidebar {
+            width: 180px;
+            background: linear-gradient(135deg, #1A237E, #3F51B5);
+            border: 2px solid #1A237E;
+            border-radius: 12px;
+            padding: 20px;
+            height: fit-content;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 8px 32px rgba(26, 35, 126, 0.2);
+        }
+        
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .sidebar a:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.4);
+            border-color: white;
+            box-shadow: 0 4px 12px rgba(26, 35, 126, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                flex-direction: row;
+            }
+            
+            .sidebar a {
+                flex: 1;
+            }
         }
         
         .user-info {
@@ -65,7 +123,7 @@
         }
         
         .logout-btn {
-            background: #667eea;
+            background: #FF9800;
             color: white;
             padding: 8px 16px;
             border: none;
@@ -77,7 +135,7 @@
         }
         
         .logout-btn:hover {
-            background: #764ba2;
+            background: #F57C00;
         }
         
         .stats {
@@ -88,7 +146,7 @@
         }
         
         .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1A237E 0%, #3F51B5 100%);
             color: white;
             padding: 20px;
             border-radius: 10px;
@@ -99,11 +157,13 @@
             font-size: 14px;
             opacity: 0.9;
             margin-bottom: 10px;
+            color: white;
         }
         
         .stat-card .number {
             font-size: 32px;
             font-weight: bold;
+            color: white;
         }
         
         .button-group {
@@ -126,22 +186,24 @@
         }
         
         .btn-primary {
-            background: #667eea;
-            color: white;
+            background: linear-gradient(135deg, #1A237E, #3F51B5) !important;
+            color: white !important;
         }
         
         .btn-primary:hover {
-            background: #764ba2;
+            background: linear-gradient(135deg, #3F51B5, #1A237E) !important;
             transform: translateY(-2px);
         }
         
         .btn-secondary {
-            background: #6c757d;
-            color: white;
+            background: rgba(255, 152, 0, 0.2) !important;
+            color: #FF9800 !important;
+            border: 2px solid #FF9800 !important;
         }
         
         .btn-secondary:hover {
-            background: #5a6268;
+            background: rgba(255, 152, 0, 0.3) !important;
+            box-shadow: 0 8px 20px rgba(255, 152, 0, 0.3) !important;
         }
         
         .report-card {
@@ -150,11 +212,11 @@
             border-radius: 8px;
             padding: 20px;
             transition: all 0.3s;
-            border-left: 5px solid #667eea;
+            border-left: 5px solid #1A237E;
         }
         
         .report-card:hover {
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px rgba(26, 35, 126, 0.2);
             transform: translateY(-2px);
         }
         
@@ -166,7 +228,7 @@
         
         .report-card .category {
             display: inline-block;
-            background: #667eea;
+            background: linear-gradient(135deg, #1A237E, #3F51B5);
             color: white;
             padding: 4px 10px;
             border-radius: 20px;
@@ -239,12 +301,12 @@
         }
         
         .btn-view {
-            background: #667eea;
+            background: linear-gradient(135deg, #1A237E, #3F51B5);
             color: white;
         }
         
         .btn-view:hover {
-            background: #764ba2;
+            background: linear-gradient(135deg, #3F51B5, #1A237E);
         }
         
         .empty-message {
@@ -262,13 +324,13 @@
         
         .nav-links a {
             text-decoration: none;
-            color: #667eea;
+            color: #FF9800;
             font-weight: 600;
             transition: color 0.3s;
         }
         
         .nav-links a:hover {
-            color: #764ba2;
+            color: #F57C00;
         }
         
         .reports-section {
@@ -278,7 +340,7 @@
         .reports-section h2 {
             color: #333;
             margin-bottom: 20px;
-            border-bottom: 3px solid #667eea;
+            border-bottom: 3px solid #FF9800;
             padding-bottom: 10px;
         }
         
@@ -313,7 +375,7 @@
         }
         
         .bottom-buttons a {
-            background: #667eea;
+            background: linear-gradient(135deg, #1A237E, #3F51B5);
             color: white;
             padding: 12px 25px;
             border-radius: 5px;
@@ -323,7 +385,7 @@
         }
         
         .bottom-buttons a:hover {
-            background: #764ba2;
+            background: linear-gradient(135deg, #3F51B5, #1A237E);
             transform: translateY(-2px);
         }
     </style>
@@ -344,51 +406,28 @@
         </div>
         
         <div class="content">
-            <div class="nav-links">
-                <a href="/">🏠 Home</a>
-                <a href="/reports/">📋 Daftar Laporan</a>
-            </div>
-            
-            <div class="stats">
-                <div class="stat-card">
-                    <h3>Total Laporan</h3>
-                    <div class="number">{{ total_reports }}</div>
+            <div class="main-area">
+                <div class="nav-links">
+                    <a href="/">🏠 Home</a>
+                    <a href="/reports/">📋 Daftar Laporan</a>
                 </div>
-            </div>
-            
-            <div class="button-group">
-                <a href="/reports/add/" class="btn btn-primary">+ Buat Laporan Baru</a>
-                <a href="/reports/" class="btn btn-secondary">Lihat Semua Laporan</a>
-            </div>
-            
-            {% if reports %}
-                <div class="reports-section">
-                    <h2>📝 Laporan Terbaru</h2>
-                    <div class="reports-grid">
-                        {% for report in reports|slice:":6" %}
-                            <div class="report-card">
-                                <h3>{{ report.title }}</h3>
-                                <span class="category">{{ report.get_category_display }}</span>
-                                <p class="description">{{ report.description|truncatewords:20 }}</p>
-                                <p class="location">📍 {{ report.location }}</p>
-                                <span class="status {{ report.status }}">{{ report.get_status_display }}</span>
-                                <p class="date">{{ report.created_at|date:"d M Y H:i" }}</p>
-                                <div class="report-actions">
-                                    <a href="/reports/{{ report.id }}/" class="btn-small btn-view">Lihat Detail</a>
-                                </div>
-                            </div>
-                        {% endfor %}
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3>Total Laporan</h3>
+                        <div class="number">{{ total_reports }}</div>
                     </div>
                 </div>
-            {% else %}
-                <div class="empty-message">
-                    <p>Belum ada laporan. <a href="/reports/add/" style="color: #667eea;">Buat laporan baru</a></p>
+                
+                <div class="button-group">
+                    <a href="/reports/add/" class="btn btn-primary">+ Buat Laporan Baru</a>
+                    <a href="/reports/" class="btn btn-secondary">Lihat Semua Laporan</a>
                 </div>
-            {% endif %}
+            </div>
             
-            <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #dee2e6; display: flex; gap: 15px; justify-content: center;">
-                <a href="/about/" style="padding: 12px 25px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#764ba2'" onmouseout="this.style.background='#667eea'">ℹ️ About</a>
-                <a href="/contacts/" style="padding: 12px 25px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#764ba2'" onmouseout="this.style.background='#667eea'">📞 Contacts</a>
+            <div class="sidebar">
+                <a href="/about/">ℹ️ About</a>
+                <a href="/contacts/">📞 Contacts</a>
             </div>
         </div>
     </div>

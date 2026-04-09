@@ -7,11 +7,12 @@ urlpatterns = [
     path('register/', views.register_view, name='register'),
     path('logout/', views.logout_view, name='logout'),
     
-    # Home & Reports
+    # Home & Reports (CBV)
     path('', views.home, name='home'),
-    path('reports/', views.report_list, name='report_list'),
-    path('reports/add/', views.add_report, name='add_report'),
-    path('reports/<int:id>/', views.report_detail, name='report_detail'),
-    path('reports/<int:id>/edit/', views.edit_report, name='edit_report'),
-    path('reports/<int:id>/delete/', views.delete_report, name='delete_report'),
+    path('reports/', views.ReportListView.as_view(), name='report_list'),
+    path('reports/add/', views.ReportCreateView.as_view(), name='add_report'),
+    path('reports/<int:id>/', views.ReportDetailView.as_view(), name='report_detail'),
+    path('reports/<int:id>/edit/', views.ReportUpdateView.as_view(), name='edit_report'),
+    path('reports/<int:id>/delete/', views.ReportDeleteView.as_view(), name='delete_report'),
+    path('reports/<int:id>/update-status/', views.ReportUpdateStatusView.as_view(), name='update_status'),
 ]

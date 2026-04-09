@@ -2,10 +2,10 @@ from django.db import models
 
 class Report(models.Model):
     STATUS_CHOICES = [
-        ('REPORTED', 'Dilaporkan'),
-        ('IN_PROGRESS', 'Sedang Diproses'),
-        ('RESOLVED', 'Selesai'),
-        ('REJECTED', 'Ditolak'),
+        ('REPORTED', 'Reported'),
+        ('VERIFIED', 'Verified'),
+        ('IN_PROGRESS', 'In Progress'),
+        ('RESOLVED', 'Resolved'),
     ]
     
     CATEGORY_CHOICES = [
@@ -14,6 +14,7 @@ class Report(models.Model):
         ('AIR', 'Pipa Air'),
         ('SAMPAH', 'Penumpukan Sampah'),
         ('LAINNYA', 'Lainnya'),
+        ('ALL', 'Semua Kategori'),
     ]
     
     title = models.CharField(max_length=200)

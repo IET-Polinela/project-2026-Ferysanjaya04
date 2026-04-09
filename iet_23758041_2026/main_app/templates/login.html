@@ -13,12 +13,51 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1A237E 0%, #3F51B5 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sticker {
+            position: fixed;
+            width: 120px;
+            height: 120px;
+            font-size: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
+            animation: float 4s ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0px) rotate(-5deg);
+            }
+            50% {
+                transform: translateY(-30px) rotate(5deg);
+            }
+            100% {
+                transform: translateY(0px) rotate(-5deg);
+            }
+        }
+        
+        .sticker-left {
+            left: 20px;
+            top: 50px;
+            animation-delay: 0s;
+        }
+        
+        .sticker-right {
+            right: 20px;
+            bottom: 100px;
+            animation-delay: 1.5s;
         }
         
         .container {
@@ -26,12 +65,14 @@
             width: 100%;
             background: white;
             border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 15px 35px rgba(26, 35, 126, 0.4);
             overflow: hidden;
+            position: relative;
+            z-index: 10;
         }
         
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1A237E 0%, #3F51B5 100%);
             color: white;
             padding: 40px 30px;
             text-align: center;
@@ -75,8 +116,8 @@
         
         .form-control:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+            border-color: #FF9800;
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
         }
         
         .messages {
@@ -122,13 +163,13 @@
         }
         
         .btn-submit {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1A237E 0%, #3F51B5 100%);
             color: white;
         }
         
         .btn-submit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 20px rgba(26, 35, 126, 0.4);
         }
         
         .link-section {
@@ -145,18 +186,44 @@
         }
         
         .link-section a {
-            color: #667eea;
+            color: #FF9800;
             text-decoration: none;
             font-weight: 600;
             transition: color 0.3s;
         }
         
         .link-section a:hover {
-            color: #764ba2;
+            color: #F57C00;
+        }
+        
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #FF9800;
+            font-size: 20px;
+            user-select: none;
+            background: none;
+            border: none;
+            padding: 5px 10px;
+        }
+        
+        .toggle-password:hover {
+            color: #F57C00;
         }
     </style>
 </head>
 <body>
+    <div class="sticker sticker-left">😴</div>
+    <div class="sticker sticker-right">💤</div>
+    
     <div class="container">
         <div class="header">
             <h1>🔐 Login</h1>
@@ -184,7 +251,10 @@
                 
                 <div class="form-group">
                     <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
-                    {{ form.password }}
+                    <div class="password-wrapper">
+                        <input type="password" name="password" id="passwordInput" class="form-control" required>
+                        <button type="button" class="toggle-password" id="togglePassword">👁️</button>
+                    </div>
                 </div>
                 
                 <div class="button-group">
@@ -198,5 +268,22 @@
             </div>
         </div>
     </div>
+    
+    <script>
+        const passwordInput = document.getElementById('passwordInput');
+        const togglePassword = document.getElementById('togglePassword');
+        
+        togglePassword.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                togglePassword.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                togglePassword.textContent = '👁️';
+            }
+        });
+    </script>
 </body>
 </html>
