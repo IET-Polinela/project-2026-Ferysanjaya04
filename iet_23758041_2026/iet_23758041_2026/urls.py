@@ -6,4 +6,6 @@ urlpatterns = [
     path('about/', include('about.urls')),
     path('contacts/', include('contacts.urls')),
     path('', include('main_app.urls')),
+    path('admin/', admin.site.urls),
+    path('auth/', include('usermanagement_23758041.urls')),
 ]

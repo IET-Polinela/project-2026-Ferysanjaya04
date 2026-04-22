@@ -28,6 +28,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+   
+    # App yang dibuat di Lab 6
+    'usermanagement_23758041',
 
     # App yang dibuat di Lab 2
     'main_app',
@@ -122,3 +125,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
+
+AUTH_USER_MODEL = 'usermanagement_23758041.User'
