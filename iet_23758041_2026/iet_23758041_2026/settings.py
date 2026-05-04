@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     'main_app',
     'about',
     'contacts',
-
+    'dashboard_23758041',
 ]
 
 MIDDLEWARE = [
