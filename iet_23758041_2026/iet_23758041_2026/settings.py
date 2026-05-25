@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',  # 🛠️ Ditambahkan untuk Lab 11 (CORS configuration)
    
     # App yang dibuat di Lab 6
     'usermanagement_23758041',
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # 🛠️ Ditambahkan untuk Lab 11 (WAJIB di urutan PALING ATAS)
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -143,3 +145,8 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+# ==============================================================================
+# CONFIGURATION FOR LAB 11 - CORS SETTINGS
+# ==============================================================================
+CORS_ALLOW_ALL_ORIGINS = True  # Mengizinkan semua domain untuk mengakses API
