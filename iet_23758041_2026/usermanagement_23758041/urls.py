@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import register_citizen
+# Mengubah import agar mengarah ke RegisterView yang ada di api_views.py (Langkah 5)
+from .api_views import RegisterView
 
 urlpatterns = [
-    # path ini akan membuat URL: localhost:8000/auth/register/
-    path('register/', register_citizen, name='register'),
+    # Path ini akan membuat URL API: localhost:8000/auth/register/
+    path('register/', RegisterView.as_view(), name='register'),
 ]
