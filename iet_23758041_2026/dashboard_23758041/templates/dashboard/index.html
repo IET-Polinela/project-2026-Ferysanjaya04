@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- BOOTSTRAP -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- CHART JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { overflow-x: hidden; }
+
+        .sidebar {
+            height: 100vh;
+            background: #343a40;
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            margin: 10px 0;
+        }
+
+        .content { padding: 20px; }
+
+        canvas { height: 250px !important; }
+
+        tr:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- SIDEBAR -->
+        <div class="col-md-2 sidebar">
+            <h4>Dashboard</h4>
+            <a href="#">Home</a>
+            <a href="#">Laporan</a>
+            <a href="#">User</a>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="col-md-10 content">
+
+            <nav class="navbar navbar-light bg-light mb-4">
+                <span class="navbar-brand">Dashboard Admin</span>
+            </nav>
+
+            <!-- CHART -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card p-3">
+                        <h5>Status Laporan</h5>
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card p-3">
+                        <h5>Kategori Laporan</h5>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEARCH -->
+            <div class="card p-3 mt-4">
+                <h5>Live Search</h5>
+                <input type="text" id="searchInput" class="form-control" placeholder="Cari laporan...">
+
+                <table class="table mt-3">
+                    <thead>
+                        <tr>
+                            <th>Judul</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="searchTable"></tbody>
+                </table>
+            </div>
+
+            <!-- TABLE -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card p-3">
+                        <h5>5 Laporan Terbaru</h5>
+                        <table class="table">
+                            <tbody id="reportedTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card p-3">
+                        <h5>5 Laporan Selesai</h5>
+                        <table class="table">
+                            <tbody id="resolvedTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    // ===== CHART =====
+    fetch('/dashboard/chart-data/')
+    .then(res => res.json())
+    .then(data => {
+
+        if (!data.status || !data.category) return;
+
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: data.status.map(i => i.status),
+                datasets: [{
+                    data: data.status.map(i => i.total)
+                }]
+            }
+        });
+
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'bar',
+            data: {
+                labels: data.category.map(i => i.category),
+                datasets: [{
+                    data: data.category.map(i => i.total)
+                }]
+            }
+        });
+
+    })
+    .catch(err => console.error("Chart Error:", err));
+
+
+    // ===== TABLE =====
+    fetch('/dashboard/latest/')
+    .then(res => res.json())
+    .then(data => {
+
+        const reportedTable = document.getElementById('reportedTable');
+        const resolvedTable = document.getElementById('resolvedTable');
+
+        reportedTable.innerHTML = "";
+        resolvedTable.innerHTML = "";
+
+        if (data.reported.length === 0) {
+            reportedTable.innerHTML = "<tr><td colspan='2'>Tidak ada data</td></tr>";
+        }
+
+        if (data.resolved.length === 0) {
+            resolvedTable.innerHTML = "<tr><td colspan='2'>Tidak ada data</td></tr>";
+        }
+
+        data.reported.forEach(item => {
+            reportedTable.innerHTML += `
+                <tr onclick="openModal(${item.id})">
+                    <td>${item.title}</td>
+                    <td>${item.status}</td>
+                </tr>`;
+        });
+
+        data.resolved.forEach(item => {
+            resolvedTable.innerHTML += `
+                <tr onclick="openModal(${item.id})">
+                    <td>${item.title}</td>
+                    <td>${item.status}</td>
+                </tr>`;
+        });
+
+    })
+    .catch(err => console.error("Table Error:", err));
+
+
+    // ===== SEARCH =====
+    const searchInput = document.getElementById('searchInput');
+    let timeout = null;
+
+    searchInput.addEventListener('keyup', function() {
+
+        clearTimeout(timeout);
+
+        timeout = setTimeout(() => {
+
+            fetch(`/dashboard/search/?q=${this.value}`)
+            .then(res => res.json())
+            .then(data => {
+
+                const table = document.getElementById('searchTable');
+                table.innerHTML = "";
+
+                if (data.length === 0) {
+                    table.innerHTML = "<tr><td colspan='2'>Tidak ditemukan</td></tr>";
+                }
+
+                data.forEach(item => {
+                    table.innerHTML += `
+                        <tr onclick="openModal(${item.id})">
+                            <td>${item.title}</td>
+                            <td>${item.status}</td>
+                        </tr>`;
+                });
+
+            })
+            .catch(err => console.error("Search Error:", err));
+
+        }, 400);
+
+    });
+
+});
+
+
+// ===== MODAL =====
+function openModal(id) {
+    fetch(`/dashboard/detail/${id}/`)
+    .then(res => {
+        if (!res.ok) throw new Error("Data tidak ditemukan");
+        return res.json();
+    })
+    .then(data => {
+
+        document.getElementById('modalTitle').innerText = data.title;
+        document.getElementById('modalDesc').innerText = data.description;
+        document.getElementById('modalStatus').innerText = data.status;
+        document.getElementById('modalLocation').innerText = data.location;
+
+        document.getElementById('modal').style.display = 'block';
+    })
+    .catch(err => {
+        alert("Gagal mengambil data!");
+        console.error(err);
+    });
+}
+
+function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('modal');
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+}
+</script>
+
+<!-- MODAL -->
+<div id="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+    <div class="bg-white p-4 rounded shadow" style="width:400px; margin:100px auto;">
+        <h4 id="modalTitle"></h4>
+        <p id="modalDesc"></p>
+        <p><b>Status:</b> <span id="modalStatus"></span></p>
+        <p><b>Lokasi:</b> <span id="modalLocation"></span></p>
+        <button class="btn btn-danger" onclick="closeModal()">Tutup</button>
+    </div>
+</div>
+
+</body>
+</html>
