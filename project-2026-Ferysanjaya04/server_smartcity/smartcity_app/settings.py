@@ -16,7 +16,7 @@ SECRET_KEY = 'django-insecure-8$#+c$v*er-_an$$ypa55gyjb60b67died9(#kl2_etnf5-ml0
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'about',
     'contacts',
     'dashboard_23758041',
+
 ]
 
 MIDDLEWARE = [
@@ -51,9 +52,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
-ROOT_URLCONF = 'iet_23758041_2026.urls'
+ROOT_URLCONF = 'smartcity_app.urls'
 
 TEMPLATES = [
     {
@@ -70,7 +72,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'iet_23758041_2026.wsgi.application'
+WSGI_APPLICATION = 'smartcity_app.wsgi.application'
 
 
 # Database
@@ -154,3 +156,5 @@ REST_FRAMEWORK = {
 # CONFIGURATION FOR LAB 11 - CORS SETTINGS
 # ==============================================================================
 CORS_ALLOW_ALL_ORIGINS = True  # Mengizinkan semua domain untuk mengakses API
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
