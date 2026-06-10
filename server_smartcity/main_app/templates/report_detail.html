@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Detail Laporan{% endblock %}
+
+{% block content %}
+
+<a href="{% url 'report_list' %}" class="btn btn-secondary mb-3">
+    ← Kembali
+</a>
+
+<h2 class="mb-3">{{ report.title }}</h2>
+<h2 class="mb-3">{{ report.title }}</h2>
+
+<div class="mb-3">
+    <form method="POST" action="{% url 'update_status' report.id %}">
+        {% csrf_token %}
+
+        <label><strong>Ubah Status:</strong></label>
+
+        <select name="status" class="form-select mb-2">
+            <option value="REPORTED" {% if report.status == "REPORTED" %}selected{% endif %}>REPORTED</option>
+            <option value="VERIFIED" {% if report.status == "VERIFIED" %}selected{% endif %}>VERIFIED</option>
+            <option value="IN_PROGRESS" {% if report.status == "IN_PROGRESS" %}selected{% endif %}>IN PROGRESS</option>
+            <option value="RESOLVED" {% if report.status == "RESOLVED" %}selected{% endif %}>RESOLVED</option>
+        </select>
+
+        <button type="submit" class="btn btn-success">
+            Update Status
+        </button>
+    </form>
+</div>
+
+<!-- STATUS -->
+<div class="mb-3">
+    <strong>Status:</strong>
+    {% if report.status == "REPORTED" %}
+        <span class="badge bg-primary">REPORTED</span>
+    {% elif report.status == "VERIFIED" %}
+        <span class="badge bg-warning text-dark">VERIFIED</span>
+    {% elif report.status == "IN_PROGRESS" %}
+        <span class="badge bg-info">IN PROGRESS</span>
+    {% elif report.status == "RESOLVED" %}
+        <span class="badge bg-success">RESOLVED</span>
+    {% endif %}
+</div>
+
+<!-- KATEGORI -->
+<div class="mb-3">
+    <strong>Kategori:</strong>
+    <span class="badge bg-info">{{ report.get_category_display }}</span>
+</div>
+
+<!-- LOKASI -->
+<div class="mb-3">
+    <strong>Lokasi:</strong>
+    <p>{{ report.location }}</p>
+</div>
+
+<!-- DESKRIPSI -->
+<div class="mb-3">
+    <strong>Deskripsi:</strong>
+    <div class="border p-3 bg-light">
+        {{ report.description }}
+    </div>
+</div>
+
+<!-- TANGGAL -->
+<div class="mb-3">
+    <strong>Dibuat:</strong> {{ report.created_at|date:"d M Y H:i" }} <br>
+    <strong>Diupdate:</strong> {{ report.updated_at|date:"d M Y H:i" }}
+</div>
+
+<hr>
+
+<!-- WORKFLOW ACTION -->
+<div class="mb-3">
+    {% if report.status == "REPORTED" %}
+        <a href="/reports/{{ report.id }}/verify/" 
+           class="btn btn-warning"
+           onclick="return confirm('Ubah ke VERIFIED?')">
+           Verify
+        </a>
+
+    {% elif report.status == "VERIFIED" %}
+        <a href="/reports/{{ report.id }}/progress/" 
+           class="btn btn-info"
+           onclick="return confirm('Ubah ke IN PROGRESS?')">
+           Progress
+        </a>
+
+    {% elif report.status == "IN_PROGRESS" %}
+        <a href="/reports/{{ report.id }}/resolve/" 
+           class="btn btn-success"
+           onclick="return confirm('Ubah ke RESOLVED?')">
+           Resolve
+        </a>
+    {% endif %}
+</div>
+
+<!-- ACTION BUTTON -->
+<div class="d-flex gap-2">
+    <a href="/reports/{{ report.id }}/edit/" class="btn btn-warning">Edit</a>
+
+    <a href="/reports/{{ report.id }}/delete/" 
+       class="btn btn-danger"
+       onclick="return confirm('Yakin ingin menghapus?')">
+       Hapus
+    </a>
+</div>
+
+{% endblock %}
+```
