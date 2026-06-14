@@ -139,7 +139,9 @@
                 <div class="report-detail">📅 <strong>Dibuat:</strong> {{ report.created_at|date:"d M Y H:i" }}</div>
                 <div class="report-detail">
                     <strong>Status:</strong> 
-                    {% if report.status == 'REPORTED' %}
+                    {% if report.status == 'DRAFT' %}
+                        <span class="badge bg-secondary">DRAFT</span>
+                    {% elif report.status == 'REPORTED' %}
                         <span style="color: #004085;">Dilaporkan</span>
                     {% elif report.status == 'IN_PROGRESS' %}
                         <span style="color: #856404;">Sedang Diproses</span>

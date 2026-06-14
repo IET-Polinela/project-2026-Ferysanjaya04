@@ -185,7 +185,13 @@ window.handleSubmitReport = async function() {
             loadDashboardData('feed', 1);
         } else {
             const error = await response.json();
-            alert(`Gagal mengajukan laporan: ${error.detail || 'Coba lagi nanti'}`);
+            const errorMessage = Object.entries(error)
+                .map(([field, messages]) => {
+                    const text = Array.isArray(messages) ? messages.join(', ') : messages;
+                    return `${field}: ${text}`;
+                })
+                .join(' | ');
+            alert(`Gagal mengajukan laporan: ${error.detail || errorMessage || 'Coba lagi nanti'}`);
         }
     } catch (error) {
         console.error('Error submitting report:', error);

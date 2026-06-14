@@ -6,7 +6,9 @@
 
 <h2 class="mb-3">📋 Daftar Laporan</h2>
 
-<a href="/reports/add/" class="btn btn-primary mb-3">+ Buat Laporan Baru</a>
+{% if not request.user.is_staff and not request.user.is_admin %}
+    <a href="/reports/add/" class="btn btn-primary mb-3">+ Buat Laporan Baru</a>
+{% endif %}
 
 {% if reports %}
 <div class="table-responsive">
@@ -40,7 +42,9 @@
 
                 <!-- STATUS BADGE -->
                 <td>
-                    {% if report.status == "REPORTED" %}
+                    {% if report.status == "DRAFT" %}
+                        <span class="badge bg-secondary">DRAFT</span>
+                    {% elif report.status == "REPORTED" %}
                         <span class="badge bg-primary">REPORTED</span>
                     {% elif report.status == "VERIFIED" %}
                         <span class="badge bg-warning text-dark">VERIFIED</span>
@@ -55,20 +59,35 @@
 
                 <td>
                     <a href="/reports/{{ report.id }}/" class="btn btn-sm btn-info">Lihat</a>
-                    <a href="/reports/{{ report.id }}/edit/" class="btn btn-sm btn-warning">Edit</a>
-                    <a href="/reports/{{ report.id }}/delete/" 
-                       class="btn btn-sm btn-danger"
-                       onclick="return confirm('Yakin ingin menghapus?')">
-                       Hapus
-                    </a>
+                    {% if not request.user.is_staff and not request.user.is_admin and report.reporter == request.user and report.status == "DRAFT" %}
+                        <a href="/reports/{{ report.id }}/edit/" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="/reports/{{ report.id }}/delete/" 
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Yakin ingin menghapus?')">
+                           Hapus
+                        </a>
+                    {% endif %}
 
-                    <!-- CONDITIONAL WORKFLOW BUTTON -->
-                    {% if report.status == "REPORTED" %}
-                        <a href="/reports/{{ report.id }}/verify/" class="btn btn-sm btn-secondary">Verify</a>
-                    {% elif report.status == "VERIFIED" %}
-                        <a href="/reports/{{ report.id }}/progress/" class="btn btn-sm btn-secondary">Progress</a>
-                    {% elif report.status == "IN_PROGRESS" %}
-                        <a href="/reports/{{ report.id }}/resolve/" class="btn btn-sm btn-success">Resolve</a>
+                    {% if request.user.is_staff or request.user.is_admin %}
+                        {% if report.status == "REPORTED" %}
+                            <form method="POST" action="{% url 'update_status' report.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="VERIFIED">
+                                <button type="submit" class="btn btn-sm btn-secondary">Verify</button>
+                            </form>
+                        {% elif report.status == "VERIFIED" %}
+                            <form method="POST" action="{% url 'update_status' report.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="IN_PROGRESS">
+                                <button type="submit" class="btn btn-sm btn-secondary">Progress</button>
+                            </form>
+                        {% elif report.status == "IN_PROGRESS" %}
+                            <form method="POST" action="{% url 'update_status' report.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="RESOLVED">
+                                <button type="submit" class="btn btn-sm btn-success">Resolve</button>
+                            </form>
+                        {% endif %}
                     {% endif %}
                 </td>
 
@@ -83,7 +102,9 @@
 <!-- EMPTY STATE -->
 <div class="text-center mt-5">
     <h5>Belum ada laporan</h5>
-    <a href="/reports/add/" class="btn btn-primary mt-2">Tambah Laporan</a>
+    {% if not request.user.is_staff and not request.user.is_admin %}
+        <a href="/reports/add/" class="btn btn-primary mt-2">Tambah Laporan</a>
+    {% endif %}
 </div>
 
 {% endif %}

@@ -12,28 +12,32 @@
 <h2 class="mb-3">{{ report.title }}</h2>
 
 <div class="mb-3">
-    <form method="POST" action="{% url 'update_status' report.id %}">
-        {% csrf_token %}
+    {% if request.user.is_staff or request.user.is_admin %}
+        <form method="POST" action="{% url 'update_status' report.id %}">
+            {% csrf_token %}
 
-        <label><strong>Ubah Status:</strong></label>
+            <label><strong>Ubah Status:</strong></label>
 
-        <select name="status" class="form-select mb-2">
-            <option value="REPORTED" {% if report.status == "REPORTED" %}selected{% endif %}>REPORTED</option>
-            <option value="VERIFIED" {% if report.status == "VERIFIED" %}selected{% endif %}>VERIFIED</option>
-            <option value="IN_PROGRESS" {% if report.status == "IN_PROGRESS" %}selected{% endif %}>IN PROGRESS</option>
-            <option value="RESOLVED" {% if report.status == "RESOLVED" %}selected{% endif %}>RESOLVED</option>
-        </select>
+            <select name="status" class="form-select mb-2">
+                <option value="REPORTED" {% if report.status == "REPORTED" %}selected{% endif %}>REPORTED</option>
+                <option value="VERIFIED" {% if report.status == "VERIFIED" %}selected{% endif %}>VERIFIED</option>
+                <option value="IN_PROGRESS" {% if report.status == "IN_PROGRESS" %}selected{% endif %}>IN PROGRESS</option>
+                <option value="RESOLVED" {% if report.status == "RESOLVED" %}selected{% endif %}>RESOLVED</option>
+            </select>
 
-        <button type="submit" class="btn btn-success">
-            Update Status
-        </button>
-    </form>
+            <button type="submit" class="btn btn-success">
+                Update Status
+            </button>
+        </form>
+    {% endif %}
 </div>
 
 <!-- STATUS -->
 <div class="mb-3">
     <strong>Status:</strong>
-    {% if report.status == "REPORTED" %}
+    {% if report.status == "DRAFT" %}
+        <span class="badge bg-secondary">DRAFT</span>
+    {% elif report.status == "REPORTED" %}
         <span class="badge bg-primary">REPORTED</span>
     {% elif report.status == "VERIFIED" %}
         <span class="badge bg-warning text-dark">VERIFIED</span>
@@ -74,38 +78,42 @@
 
 <!-- WORKFLOW ACTION -->
 <div class="mb-3">
-    {% if report.status == "REPORTED" %}
-        <a href="/reports/{{ report.id }}/verify/" 
-           class="btn btn-warning"
-           onclick="return confirm('Ubah ke VERIFIED?')">
-           Verify
-        </a>
+    {% if request.user.is_staff or request.user.is_admin %}
+        {% if report.status == "REPORTED" %}
+            <form method="POST" action="{% url 'update_status' report.id %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="VERIFIED">
+                <button type="submit" class="btn btn-warning">Verify</button>
+            </form>
 
-    {% elif report.status == "VERIFIED" %}
-        <a href="/reports/{{ report.id }}/progress/" 
-           class="btn btn-info"
-           onclick="return confirm('Ubah ke IN PROGRESS?')">
-           Progress
-        </a>
+        {% elif report.status == "VERIFIED" %}
+            <form method="POST" action="{% url 'update_status' report.id %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="IN_PROGRESS">
+                <button type="submit" class="btn btn-info">Progress</button>
+            </form>
 
-    {% elif report.status == "IN_PROGRESS" %}
-        <a href="/reports/{{ report.id }}/resolve/" 
-           class="btn btn-success"
-           onclick="return confirm('Ubah ke RESOLVED?')">
-           Resolve
-        </a>
+        {% elif report.status == "IN_PROGRESS" %}
+            <form method="POST" action="{% url 'update_status' report.id %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="RESOLVED">
+                <button type="submit" class="btn btn-success">Resolve</button>
+            </form>
+        {% endif %}
     {% endif %}
 </div>
 
 <!-- ACTION BUTTON -->
 <div class="d-flex gap-2">
-    <a href="/reports/{{ report.id }}/edit/" class="btn btn-warning">Edit</a>
+    {% if not request.user.is_staff and not request.user.is_admin and report.reporter == request.user and report.status == "DRAFT" %}
+        <a href="/reports/{{ report.id }}/edit/" class="btn btn-warning">Edit</a>
 
-    <a href="/reports/{{ report.id }}/delete/" 
-       class="btn btn-danger"
-       onclick="return confirm('Yakin ingin menghapus?')">
-       Hapus
-    </a>
+        <a href="/reports/{{ report.id }}/delete/" 
+           class="btn btn-danger"
+           onclick="return confirm('Yakin ingin menghapus?')">
+           Hapus
+        </a>
+    {% endif %}
 </div>
 
 {% endblock %}

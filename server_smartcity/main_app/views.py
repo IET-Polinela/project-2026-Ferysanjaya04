@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.db.models import Q
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
@@ -13,11 +14,20 @@ from usermanagement_23758041.decorators import admin_only
 from .models import Report
 from .forms import ReportForm, LoginForm, RegisterForm
 
+
+def is_admin_user(user):
+    return user.is_staff or getattr(user, 'is_admin', False)
+
+
 # --- FUNCTION BASED VIEWS ---
 
 @login_required(login_url='login')
 def home(request):
-    reports = Report.objects.all()
+    if is_admin_user(request.user):
+        reports = Report.objects.exclude(status='DRAFT')
+    else:
+        reports = Report.objects.filter(Q(reporter=request.user) | ~Q(status='DRAFT'))
+
     context = {
         'reports': reports,
         'total_reports': reports.count(),
@@ -55,6 +65,10 @@ def update_status(request, id):
     if request.method == 'POST':
         status = request.POST.get('status')
         if status:
+            if not report.can_move_to_status(status):
+                messages.error(request, 'Status tidak boleh mundur.')
+                return redirect('report_detail', id=report.id)
+
             report.status = status
             report.save()
             messages.success(request, 'Status berhasil diperbarui!')
@@ -68,10 +82,18 @@ class ReportListView(LoginRequiredMixin, ListView):
     template_name = 'report_list.html'
     context_object_name = 'reports'
     login_url = 'login'
+
+    def get_queryset(self):
+        if is_admin_user(self.request.user):
+            return Report.objects.exclude(status='DRAFT').order_by('-created_at')
+
+        return Report.objects.filter(
+            Q(reporter=self.request.user) | ~Q(status='DRAFT')
+        ).order_by('-created_at')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['total_reports'] = Report.objects.count()
+        context['total_reports'] = self.get_queryset().count()
         return context
 
 class ReportDetailView(LoginRequiredMixin, DetailView):
@@ -81,40 +103,83 @@ class ReportDetailView(LoginRequiredMixin, DetailView):
     pk_url_kwarg = 'id'
     login_url = 'login'
 
-# Proteksi Tambah Laporan (Hanya Admin)
-@method_decorator([login_required, admin_only], name='dispatch')
+    def get_queryset(self):
+        if is_admin_user(self.request.user):
+            return Report.objects.exclude(status='DRAFT')
+
+        return Report.objects.filter(
+            Q(reporter=self.request.user) | ~Q(status='DRAFT')
+        )
+
 class ReportCreateView(LoginRequiredMixin, CreateView):
     model = Report
     form_class = ReportForm
     template_name = 'add_report.html'
     success_url = reverse_lazy('home')
     login_url = 'login'
+
+    def dispatch(self, request, *args, **kwargs):
+        if is_admin_user(request.user):
+            messages.error(request, 'Admin tidak boleh membuat laporan.')
+            return redirect('report_list')
+        return super().dispatch(request, *args, **kwargs)
     
     def form_valid(self, form):
+        form.instance.reporter = self.request.user
         messages.success(self.request, 'Laporan berhasil dibuat!')
         return super().form_valid(form)
 
-# Proteksi Edit Laporan (Hanya Admin)
-@method_decorator([login_required, admin_only], name='dispatch')
 class ReportUpdateView(LoginRequiredMixin, UpdateView):
     model = Report
     form_class = ReportForm
     template_name = 'edit_report.html'
     pk_url_kwarg = 'id'
     login_url = 'login'
+
+    def dispatch(self, request, *args, **kwargs):
+        report = self.get_object()
+
+        if is_admin_user(request.user):
+            messages.error(request, 'Admin hanya boleh mengubah status laporan.')
+            return redirect('report_detail', id=report.id)
+
+        if report.reporter != request.user:
+            messages.error(request, 'Anda hanya boleh mengedit laporan sendiri.')
+            return redirect('report_detail', id=report.id)
+
+        if report.status != 'DRAFT':
+            messages.error(request, 'Laporan yang sudah diajukan hanya bisa dilihat.')
+            return redirect('report_detail', id=report.id)
+
+        return super().dispatch(request, *args, **kwargs)
     
     def get_success_url(self):
         messages.success(self.request, 'Laporan berhasil diperbarui!')
         return reverse_lazy('report_detail', kwargs={'id': self.object.id})
 
-# Proteksi Hapus Laporan (Hanya Admin)
-@method_decorator([login_required, admin_only], name='dispatch')
 class ReportDeleteView(LoginRequiredMixin, DeleteView):
     model = Report
     template_name = 'delete_report.html'
     success_url = reverse_lazy('report_list')
     pk_url_kwarg = 'id'
     login_url = 'login'
+
+    def dispatch(self, request, *args, **kwargs):
+        report = self.get_object()
+
+        if is_admin_user(request.user):
+            messages.error(request, 'Admin tidak boleh menghapus laporan.')
+            return redirect('report_detail', id=report.id)
+
+        if report.reporter != request.user:
+            messages.error(request, 'Anda hanya boleh menghapus laporan sendiri.')
+            return redirect('report_detail', id=report.id)
+
+        if report.status != 'DRAFT':
+            messages.error(request, 'Laporan yang sudah diajukan tidak boleh dihapus.')
+            return redirect('report_detail', id=report.id)
+
+        return super().dispatch(request, *args, **kwargs)
     
     def delete(self, request, *args, **kwargs):
         messages.success(request, 'Laporan berhasil dihapus!')
@@ -127,6 +192,10 @@ class ReportUpdateStatusView(View):
         report = get_object_or_404(Report, id=id)
         new_status = request.POST.get('status')
         if new_status and new_status in dict(Report.STATUS_CHOICES):
+            if not report.can_move_to_status(new_status):
+                messages.error(request, 'Status tidak boleh mundur.')
+                return redirect('report_detail', id=report.id)
+
             report.status = new_status
             report.save()
             messages.success(request, 'Status laporan berhasil diubah!')

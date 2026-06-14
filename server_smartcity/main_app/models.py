@@ -10,6 +10,13 @@ class Report(models.Model):
         ('IN_PROGRESS', 'In Progress'),
         ('RESOLVED', 'Resolved'),
     ]
+    STATUS_ORDER = {
+        'DRAFT': 0,
+        'REPORTED': 1,
+        'VERIFIED': 2,
+        'IN_PROGRESS': 3,
+        'RESOLVED': 4,
+    }
 
     CATEGORY_CHOICES = [
         ('JALAN', 'Jalan Rusak'),
@@ -55,3 +62,12 @@ class Report(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.get_status_display()}"
+
+    def can_move_to_status(self, new_status):
+        current_order = self.STATUS_ORDER.get(self.status)
+        new_order = self.STATUS_ORDER.get(new_status)
+
+        if current_order is None or new_order is None:
+            return False
+
+        return new_order >= current_order

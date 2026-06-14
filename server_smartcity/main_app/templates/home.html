@@ -420,7 +420,9 @@
                 </div>
                 
                 <div class="button-group">
-                    <a href="/reports/add/" class="btn btn-primary">+ Buat Laporan Baru</a>
+                    {% if not user.is_staff and not user.is_admin %}
+                        <a href="/reports/add/" class="btn btn-primary">+ Buat Laporan Baru</a>
+                    {% endif %}
                     <a href="/reports/" class="btn btn-secondary">Lihat Semua Laporan</a>
                 </div>
             </div>
