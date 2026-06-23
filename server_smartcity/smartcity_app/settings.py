@@ -30,7 +30,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
-    'corsheaders',  # 🛠️ Ditambahkan untuk Lab 11 (CORS configuration)
+    'corsheaders',  
+    'drf_spectacular',  
+    'django_scalar',
    
     # App yang dibuat di Lab 6
     'usermanagement_23758041',
@@ -143,6 +145,7 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
@@ -158,3 +161,10 @@ REST_FRAMEWORK = {
 CORS_ALLOW_ALL_ORIGINS = True  # Mengizinkan semua domain untuk mengakses API
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Smart City Portal API',
+    'DESCRIPTION': 'Dokumentasi REST API resmi untuk Portal Pelaporan Laporan Warga',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
