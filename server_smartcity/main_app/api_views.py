@@ -24,9 +24,16 @@ class ReportViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        tab = self.request.query_params.get('tab')
 
         if self.is_admin_user(user):
             return Report.objects.exclude(status='DRAFT').order_by('-updated_at')
+
+        if tab == 'feed':
+            return Report.objects.exclude(status='DRAFT').order_by('-updated_at')
+
+        if tab == 'my_reports':
+            return Report.objects.filter(reporter=user).order_by('-updated_at')
 
         return Report.objects.filter(
             Q(reporter=user) | ~Q(status='DRAFT')

@@ -10,6 +10,9 @@
         body { 
             background-color: #f4f6f9; 
         }
+        .modal:not(.show) {
+            display: none;
+        }
         .spa-container { 
             min-height: calc(100vh - 80px); 
         }
@@ -49,15 +52,19 @@
                     <form id="reportForm">
                         <!-- Field 1: Judul Laporan -->
                         <div class="mb-3">
-                            <label for="reportTitle" class="form-label fw-bold">Judul Laporan</label>
-                            <input type="text" class="form-control" id="reportTitle" placeholder="Deskripsi singkat masalah" required>
+                            <label for="inputTitle" class="form-label fw-bold">Judul Laporan</label>
+                            <input type="text" class="form-control" id="inputTitle" placeholder="Deskripsi singkat masalah" required>
                         </div>
 
                         <!-- Field 2: Kategori -->
                         <div class="mb-3">
-                            <label for="reportCategory" class="form-label fw-bold">Kategori</label>
-                            <select class="form-select" id="reportCategory" required>
+                            <label for="inputCategory" class="form-label fw-bold">Kategori</label>
+                            <select class="form-select" id="inputCategory" required>
                                 <option value="">-- Pilih Kategori --</option>
+                                <option value="Infrastruktur">Infrastruktur</option>
+                                <option value="Fasilitas Umum">Fasilitas Umum</option>
+                                <option value="Kebersihan">Kebersihan</option>
+                                <option value="Keamanan">Keamanan</option>
                                 <option value="JALAN">Jalan Rusak</option>
                                 <option value="LAMPU">Lampu Jalan</option>
                                 <option value="AIR">Pipa Air</option>
@@ -68,14 +75,14 @@
 
                         <!-- Field 3: Deskripsi Lengkap -->
                         <div class="mb-3">
-                            <label for="reportDescription" class="form-label fw-bold">Deskripsi Lengkap</label>
-                            <textarea class="form-control" id="reportDescription" rows="3" placeholder="Jelaskan detail masalah dengan lengkap..." required></textarea>
+                            <label for="inputDescription" class="form-label fw-bold">Deskripsi Lengkap</label>
+                            <textarea class="form-control" id="inputDescription" rows="3" placeholder="Jelaskan detail masalah dengan lengkap..." required></textarea>
                         </div>
 
                         <!-- Field 4: Lokasi -->
                         <div class="mb-3">
-                            <label for="reportLocation" class="form-label fw-bold">Lokasi</label>
-                            <input type="text" class="form-control" id="reportLocation" placeholder="Alamat atau nama jalan" required>
+                            <label for="inputLocation" class="form-label fw-bold">Lokasi</label>
+                            <input type="text" class="form-control" id="inputLocation" placeholder="Alamat atau nama jalan" required>
                         </div>
                     </form>
                 </div>

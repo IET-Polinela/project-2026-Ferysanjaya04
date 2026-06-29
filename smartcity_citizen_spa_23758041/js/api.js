@@ -28,8 +28,7 @@ async function requestAPI(endpoint, method = 'GET', bodyData = null) {
         // LAB 12 SOAL 4: Handle 401 Unauthorized (Token Invalid/Expired)
         if (response.status === 401) {
             console.warn('Token tidak valid atau expired. Redirect ke login...');
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
+            localStorage.clear();
             window.location.hash = '#login';
             return response;
         }

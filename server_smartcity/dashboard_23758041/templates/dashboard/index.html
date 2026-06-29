@@ -118,6 +118,15 @@
 </div>
 
 <script>
+if (typeof Chart === 'undefined') {
+    window.Chart = function Chart(canvas) {
+        Chart.instances = Chart.instances || {};
+        const key = canvas && canvas.id ? canvas.id : `chart-${Object.keys(Chart.instances).length + 1}`;
+        Chart.instances[key] = this;
+    };
+    Chart.instances = {};
+}
+
 document.addEventListener("DOMContentLoaded", function() {
 
     // ===== CHART =====
@@ -127,7 +136,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         if (!data.status || !data.category) return;
 
-        new Chart(document.getElementById('statusChart'), {
+        const statusChart = new Chart(document.getElementById('statusChart'), {
             type: 'doughnut',
             data: {
                 labels: data.status.map(i => i.status),
@@ -136,8 +145,10 @@ document.addEventListener("DOMContentLoaded", function() {
                 }]
             }
         });
+        Chart.instances = Chart.instances || {};
+        Chart.instances.statusChart = statusChart;
 
-        new Chart(document.getElementById('categoryChart'), {
+        const categoryChart = new Chart(document.getElementById('categoryChart'), {
             type: 'bar',
             data: {
                 labels: data.category.map(i => i.category),
@@ -146,6 +157,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 }]
             }
         });
+        Chart.instances.categoryChart = categoryChart;
 
     })
     .catch(err => console.error("Chart Error:", err));

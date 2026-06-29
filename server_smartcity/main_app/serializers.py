@@ -9,12 +9,27 @@ User = get_user_model()
 
 class ReportSerializer(serializers.ModelSerializer):
     reporter = serializers.SerializerMethodField()
+    reporter_name = serializers.SerializerMethodField()
+    is_owner = serializers.SerializerMethodField()
 
     class Meta:
         model = Report
-        fields = '__all__'
+        fields = [
+            'id', 'title', 'category', 'description', 'location', 'reporter',
+            'reporter_name', 'is_owner', 'status', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['reporter', 'reporter_name', 'is_owner', 'created_at', 'updated_at']
 
     def get_reporter(self, obj):
+        return "Warga Anonim"
+
+    def get_is_owner(self, obj):
+        request = self.context.get('request')
+        return bool(request and request.user.is_authenticated and obj.reporter == request.user)
+
+    def get_reporter_name(self, obj):
+        if self.get_is_owner(obj) and obj.reporter:
+            return obj.reporter.username
         return "Warga Anonim"
 
     def validate_status(self, value):

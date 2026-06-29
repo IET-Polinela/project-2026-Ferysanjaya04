@@ -9,10 +9,13 @@ urlpatterns = [
     
     # Home & Reports (CBV)
     path('', views.home, name='home'),
+    path('search/', views.report_search, name='search_report'),
+    path('reports/search/', views.report_search, name='report_search'),
     path('reports/', views.ReportListView.as_view(), name='report_list'),
     path('reports/add/', views.ReportCreateView.as_view(), name='add_report'),
-    path('reports/<int:id>/', views.ReportDetailView.as_view(), name='report_detail'),
-    path('reports/<int:id>/edit/', views.ReportUpdateView.as_view(), name='edit_report'),
-    path('reports/<int:id>/delete/', views.ReportDeleteView.as_view(), name='delete_report'),
-    path('reports/<int:id>/update-status/', views.ReportUpdateStatusView.as_view(), name='update_status'),
+    path('reports/<int:pk>/', views.ReportDetailView.as_view(), name='report_detail'),
+    path('reports/<int:pk>/edit/', views.ReportUpdateView.as_view(), name='update_report'),
+    path('reports/<int:pk>/edit/', views.ReportUpdateView.as_view(), name='edit_report'),
+    path('reports/<int:pk>/delete/', views.ReportDeleteView.as_view(), name='delete_report'),
+    path('reports/<int:pk>/update-status/', views.ReportUpdateStatusView.as_view(), name='update_status'),
 ]

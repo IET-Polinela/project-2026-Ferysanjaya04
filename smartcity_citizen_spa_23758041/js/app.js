@@ -3,14 +3,23 @@
 // ================================================================
 let editingReportId = null;
 
+function reportField(id) {
+    return document.getElementById(id);
+}
+
 /**
  * setupReportModal()
  * LAB 12: Setup event listener untuk tombol "Simpan Draft" dan "Ajukan"
  */
 window.setupReportModal = function() {
+    const btnBukaModal = document.getElementById('btnBukaModal');
     const btnDraft = document.getElementById('btnDraft');
     const btnSubmit = document.getElementById('btnSubmit');
     const reportModal = document.getElementById('reportModal');
+
+    if (btnBukaModal) {
+        btnBukaModal.addEventListener('click', showReportModal);
+    }
     
     if (btnDraft) {
         btnDraft.addEventListener('click', handleSaveDraft);
@@ -27,6 +36,33 @@ window.setupReportModal = function() {
             document.getElementById('reportModalLabel').textContent = '✏️ Buat Laporan Baru';
             editingReportId = null;
         });
+    }
+}
+
+function showReportModal() {
+    const reportModal = document.getElementById('reportModal');
+    if (!reportModal) return;
+
+    if (window.bootstrap && bootstrap.Modal) {
+        bootstrap.Modal.getOrCreateInstance(reportModal).show();
+        return;
+    }
+
+    reportModal.classList.add('show');
+    reportModal.style.display = 'block';
+    reportModal.removeAttribute('aria-hidden');
+}
+
+function hideReportModal() {
+    const reportModal = document.getElementById('reportModal');
+    if (!reportModal) return;
+
+    if (window.bootstrap && bootstrap.Modal) {
+        bootstrap.Modal.getOrCreateInstance(reportModal).hide();
+    } else {
+        reportModal.classList.remove('show');
+        reportModal.style.display = 'none';
+        reportModal.setAttribute('aria-hidden', 'true');
     }
 }
 
@@ -52,10 +88,10 @@ window.editDraft = async function(id) {
             const report = await response.json();
             
             // Isi form dengan data laporan lama
-            document.getElementById('reportTitle').value = report.title;
-            document.getElementById('reportCategory').value = report.category;
-            document.getElementById('reportDescription').value = report.description;
-            document.getElementById('reportLocation').value = report.location;
+            reportField('inputTitle').value = report.title;
+            reportField('inputCategory').value = report.category;
+            reportField('inputDescription').value = report.description;
+            reportField('inputLocation').value = report.location;
             
             // Set global variable editingReportId
             editingReportId = id;
@@ -64,8 +100,7 @@ window.editDraft = async function(id) {
             document.getElementById('reportModalLabel').textContent = '✏️ Edit Laporan Draft';
             
             // Tampilkan modal
-            const modal = new bootstrap.Modal(document.getElementById('reportModal'));
-            modal.show();
+            showReportModal();
         } else {
             const errorData = await response.json();
             console.error('API Error:', errorData);
@@ -92,10 +127,10 @@ window.handleSaveDraft = async function() {
     }
     
     const formData = {
-        title: document.getElementById('reportTitle').value,
-        category: document.getElementById('reportCategory').value,
-        description: document.getElementById('reportDescription').value,
-        location: document.getElementById('reportLocation').value,
+        title: reportField('inputTitle').value,
+        category: reportField('inputCategory').value,
+        description: reportField('inputDescription').value,
+        location: reportField('inputLocation').value,
         status: 'DRAFT'
     };
     
@@ -120,8 +155,7 @@ window.handleSaveDraft = async function() {
             editingReportId = null;
             
             // Tutup modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
-            modal.hide();
+            hideReportModal();
             
             // Reload data dashboard
             loadDashboardData('my_reports', 1);
@@ -150,10 +184,10 @@ window.handleSubmitReport = async function() {
     }
     
     const formData = {
-        title: document.getElementById('reportTitle').value,
-        category: document.getElementById('reportCategory').value,
-        description: document.getElementById('reportDescription').value,
-        location: document.getElementById('reportLocation').value,
+        title: reportField('inputTitle').value,
+        category: reportField('inputCategory').value,
+        description: reportField('inputDescription').value,
+        location: reportField('inputLocation').value,
         status: 'REPORTED'
     };
     
@@ -178,8 +212,7 @@ window.handleSubmitReport = async function() {
             editingReportId = null;
             
             // Tutup modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
-            modal.hide();
+            hideReportModal();
             
             // Reload data dashboard
             loadDashboardData('feed', 1);
@@ -256,7 +289,7 @@ window.loadSummaryStats = async function() {
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-1">
                                     <small class="fw-bold">Draft</small>
-                                    <small class="text-secondary fw-bold">${draftCount}</small>
+                                    <span class="badge bg-secondary">${draftCount}</span>
                                 </div>
                                 <div class="progress" style="height: 6px;">
                                     <div class="progress-bar bg-warning" style="width: ${totalCount > 0 ? (draftCount / totalCount * 100) : 0}%"></div>
@@ -376,7 +409,7 @@ window.renderList = function(reports, tab) {
         console.log('Rendering report:', {id: report.id, title: report.title, status: report.status});
         
         return `
-        <div class="col-12 col-md-6 col-lg-12">
+        <div class="col col-12 col-md-6 col-lg-12">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">

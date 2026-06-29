@@ -1,3 +1,4 @@
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -21,18 +22,57 @@ def is_admin_user(user):
 
 # --- FUNCTION BASED VIEWS ---
 
-@login_required(login_url='login')
 def home(request):
-    if is_admin_user(request.user):
+    if request.user.is_authenticated and is_admin_user(request.user):
         reports = Report.objects.exclude(status='DRAFT')
-    else:
+    elif request.user.is_authenticated:
         reports = Report.objects.filter(Q(reporter=request.user) | ~Q(status='DRAFT'))
+    else:
+        reports = Report.objects.exclude(status='DRAFT')
 
     context = {
         'reports': reports,
         'total_reports': reports.count(),
     }
-    return render(request, 'home.html', context)
+    return render(request, 'main_app/home.html', context)
+
+
+def report_detail_api(request, id):
+    report = get_object_or_404(Report, id=id)
+    return JsonResponse({
+        'id': report.id,
+        'title': report.title,
+        'category': report.category,
+        'description': report.description,
+        'location': report.location,
+        'status': report.status,
+    })
+
+
+def report_search(request):
+    if not request.user.is_authenticated or not is_admin_user(request.user):
+        return HttpResponseForbidden()
+
+    query = request.GET.get('q', '')
+    reports = Report.objects.exclude(status='DRAFT')
+    if query:
+        reports = reports.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(location__icontains=query)
+        )
+    return JsonResponse({
+        'results': [
+            {
+                'id': report.id,
+                'title': report.title,
+                'category': report.get_category_display(),
+                'location': report.location,
+                'status': report.status,
+            }
+            for report in reports
+        ]
+    })
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -58,38 +98,39 @@ def logout_view(request):
     return redirect('login')
 
 # Proteksi Admin untuk update status manual
-@login_required
+@login_required(login_url='login')
 @admin_only
-def update_status(request, id):
-    report = get_object_or_404(Report, id=id)
+def update_status(request, pk):
+    report = get_object_or_404(Report, pk=pk)
     if request.method == 'POST':
         status = request.POST.get('status')
         if status:
             if not report.can_move_to_status(status):
                 messages.error(request, 'Status tidak boleh mundur.')
-                return redirect('report_detail', id=report.id)
+                return redirect('report_detail', pk=report.id)
 
             report.status = status
             report.save()
             messages.success(request, 'Status berhasil diperbarui!')
-    return redirect('report_detail', id=report.id)
+    return redirect('report_detail', pk=report.id)
 
 
 # --- CLASS BASED VIEWS (PROTECTED) ---
 
 class ReportListView(LoginRequiredMixin, ListView):
     model = Report
-    template_name = 'report_list.html'
+    template_name = 'main_app/report_list.html'
     context_object_name = 'reports'
     login_url = 'login'
 
-    def get_queryset(self):
-        if is_admin_user(self.request.user):
-            return Report.objects.exclude(status='DRAFT').order_by('-created_at')
+    def dispatch(self, request, *args, **kwargs):
+        if not is_admin_user(request.user):
+            messages.error(request, 'Hanya admin yang boleh memakai portal monolitik.')
+            return redirect('home')
+        return super().dispatch(request, *args, **kwargs)
 
-        return Report.objects.filter(
-            Q(reporter=self.request.user) | ~Q(status='DRAFT')
-        ).order_by('-created_at')
+    def get_queryset(self):
+        return Report.objects.exclude(status='DRAFT').order_by('-created_at')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -98,10 +139,16 @@ class ReportListView(LoginRequiredMixin, ListView):
 
 class ReportDetailView(LoginRequiredMixin, DetailView):
     model = Report
-    template_name = 'report_detail.html'
+    template_name = 'main_app/report_detail.html'
     context_object_name = 'report'
-    pk_url_kwarg = 'id'
+    pk_url_kwarg = 'pk'
     login_url = 'login'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not is_admin_user(request.user):
+            messages.error(request, 'Hanya admin yang boleh memakai portal monolitik.')
+            return redirect('home')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         if is_admin_user(self.request.user):
@@ -114,13 +161,13 @@ class ReportDetailView(LoginRequiredMixin, DetailView):
 class ReportCreateView(LoginRequiredMixin, CreateView):
     model = Report
     form_class = ReportForm
-    template_name = 'add_report.html'
-    success_url = reverse_lazy('home')
+    template_name = 'main_app/add_report.html'
+    success_url = reverse_lazy('report_list')
     login_url = 'login'
 
     def dispatch(self, request, *args, **kwargs):
-        if is_admin_user(request.user):
-            messages.error(request, 'Admin tidak boleh membuat laporan.')
+        if not is_admin_user(request.user):
+            messages.error(request, 'Hanya admin yang boleh memakai portal monolitik.')
             return redirect('report_list')
         return super().dispatch(request, *args, **kwargs)
     
@@ -132,52 +179,36 @@ class ReportCreateView(LoginRequiredMixin, CreateView):
 class ReportUpdateView(LoginRequiredMixin, UpdateView):
     model = Report
     form_class = ReportForm
-    template_name = 'edit_report.html'
-    pk_url_kwarg = 'id'
+    template_name = 'main_app/edit_report.html'
+    pk_url_kwarg = 'pk'
     login_url = 'login'
 
     def dispatch(self, request, *args, **kwargs):
         report = self.get_object()
 
-        if is_admin_user(request.user):
-            messages.error(request, 'Admin hanya boleh mengubah status laporan.')
-            return redirect('report_detail', id=report.id)
-
-        if report.reporter != request.user:
-            messages.error(request, 'Anda hanya boleh mengedit laporan sendiri.')
-            return redirect('report_detail', id=report.id)
-
-        if report.status != 'DRAFT':
-            messages.error(request, 'Laporan yang sudah diajukan hanya bisa dilihat.')
-            return redirect('report_detail', id=report.id)
+        if not is_admin_user(request.user):
+            messages.error(request, 'Hanya admin yang boleh memakai portal monolitik.')
+            return redirect('report_detail', pk=report.id)
 
         return super().dispatch(request, *args, **kwargs)
     
     def get_success_url(self):
         messages.success(self.request, 'Laporan berhasil diperbarui!')
-        return reverse_lazy('report_detail', kwargs={'id': self.object.id})
+        return reverse_lazy('report_list')
 
 class ReportDeleteView(LoginRequiredMixin, DeleteView):
     model = Report
-    template_name = 'delete_report.html'
+    template_name = 'main_app/delete_report.html'
     success_url = reverse_lazy('report_list')
-    pk_url_kwarg = 'id'
+    pk_url_kwarg = 'pk'
     login_url = 'login'
 
     def dispatch(self, request, *args, **kwargs):
         report = self.get_object()
 
-        if is_admin_user(request.user):
-            messages.error(request, 'Admin tidak boleh menghapus laporan.')
-            return redirect('report_detail', id=report.id)
-
-        if report.reporter != request.user:
-            messages.error(request, 'Anda hanya boleh menghapus laporan sendiri.')
-            return redirect('report_detail', id=report.id)
-
-        if report.status != 'DRAFT':
-            messages.error(request, 'Laporan yang sudah diajukan tidak boleh dihapus.')
-            return redirect('report_detail', id=report.id)
+        if not is_admin_user(request.user):
+            messages.error(request, 'Hanya admin yang boleh memakai portal monolitik.')
+            return redirect('report_detail', pk=report.id)
 
         return super().dispatch(request, *args, **kwargs)
     
@@ -188,18 +219,18 @@ class ReportDeleteView(LoginRequiredMixin, DeleteView):
 # Proteksi Update Status (Hanya Admin)
 @method_decorator([login_required, admin_only], name='dispatch')
 class ReportUpdateStatusView(View):
-    def post(self, request, id):
-        report = get_object_or_404(Report, id=id)
+    def post(self, request, pk):
+        report = get_object_or_404(Report, pk=pk)
         new_status = request.POST.get('status')
         if new_status and new_status in dict(Report.STATUS_CHOICES):
             if not report.can_move_to_status(new_status):
                 messages.error(request, 'Status tidak boleh mundur.')
-                return redirect('report_detail', id=report.id)
+                return redirect('report_detail', pk=report.id)
 
             report.status = new_status
             report.save()
             messages.success(request, 'Status laporan berhasil diubah!')
-        return redirect('report_detail', id=report.id)
+        return redirect('report_detail', pk=report.id)
     
     # Tambahkan ini di paling bawah main_app/views.py
 def register_view(request):

@@ -65,15 +65,15 @@ const routes = {
         <div class="row g-4">
             <aside class="col-12 col-lg-3">
                 <div class="card border-0 p-3 shadow-sm sticky-top" style="top: 20px;">
-                    <button class="btn btn-primary btn-lg w-100 fw-bold mb-3" data-bs-toggle="modal" data-bs-target="#reportModal">
+                    <button id="btnBukaModal" class="btn btn-primary btn-lg w-100 fw-bold mb-3" data-bs-toggle="modal" data-bs-target="#reportModal">
                         <i class="bi bi-plus-circle-fill me-2"></i>Laporan Baru
                     </button>
                     <hr>
                     <div class="btn-group d-flex flex-column gap-2 w-100" role="group">
-                        <button type="button" class="btn btn-outline-primary fw-bold" onclick="loadDashboardData('my_reports', 1)">
+                        <button id="tabLaporanSaya" type="button" class="btn btn-outline-primary fw-bold" onclick="loadDashboardData('my_reports', 1)">
                             <i class="bi bi-file-earmark-text me-2"></i>Laporan Saya
                         </button>
-                        <button type="button" class="btn btn-outline-primary fw-bold" onclick="loadDashboardData('feed', 1)">
+                        <button id="tabFeedKota" type="button" class="btn btn-outline-primary fw-bold" onclick="loadDashboardData('feed', 1)">
                             <i class="bi bi-newspaper me-2"></i>Feed Kota
                         </button>
                     </div>

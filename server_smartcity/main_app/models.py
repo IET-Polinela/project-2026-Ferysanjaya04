@@ -25,6 +25,11 @@ class Report(models.Model):
         ('SAMPAH', 'Penumpukan Sampah'),
         ('LAINNYA', 'Lainnya'),
         ('ALL', 'Semua Kategori'),
+        ('Infrastruktur', 'Infrastruktur'),
+        ('Fasilitas Umum', 'Fasilitas Umum'),
+        ('Kebersihan', 'Kebersihan'),
+        ('Keamanan', 'Keamanan'),
+        ('Lainnya', 'Lainnya'),
     ]
 
     title = models.CharField(max_length=200)
@@ -61,7 +66,7 @@ class Report(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.title} - {self.get_status_display()}"
+        return self.title
 
     def can_move_to_status(self, new_status):
         current_order = self.STATUS_ORDER.get(self.status)
@@ -70,4 +75,4 @@ class Report(models.Model):
         if current_order is None or new_order is None:
             return False
 
-        return new_order >= current_order
+        return new_order == current_order + 1
