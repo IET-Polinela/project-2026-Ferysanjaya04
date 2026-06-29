@@ -82,8 +82,8 @@ function setupRegisterForm() {
         }
 
         try {
-            // Kirim ke endpoint /api/register/ menggunakan fetch biasa (bukan JWT)
-            const response = await fetch('http://127.0.0.1:8000/api/register/', {
+            // Kirim ke endpoint /api/register/ di backend publik (samakan BASE_URL dengan API lain)
+            const response = await fetch('http://103.151.63.85:8002/api/register/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -5,14 +5,14 @@ from drf_spectacular.utils import extend_schema_view, extend_schema
 from .models import Report
 from .serializers import ReportSerializer
 
-@extend_schema_view(
-    list=extend_schema(exclude=True),
-    retrieve=extend_schema(exclude=True),
-    create=extend_schema(exclude=True),
-    update=extend_schema(exclude=True),
-    partial_update=extend_schema(exclude=True),
-    destroy=extend_schema(exclude=True),
-)
+#@extend_schema_view(
+ #   list=extend_schema(exclude=True),
+ #  retrieve=extend_schema(exclude=True),
+ #  create=extend_schema(exclude=True),
+ #   update=extend_schema(exclude=True),
+ #  partial_update=extend_schema(exclude=True),
+ #   destroy=extend_schema(exclude=True),
+#)
 
 class ReportViewSet(viewsets.ModelViewSet):
     queryset = Report.objects.all()
