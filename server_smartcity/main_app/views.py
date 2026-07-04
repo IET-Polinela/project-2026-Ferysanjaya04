@@ -123,14 +123,13 @@ class ReportListView(LoginRequiredMixin, ListView):
     context_object_name = 'reports'
     login_url = 'login'
 
-    def dispatch(self, request, *args, **kwargs):
-        if not is_admin_user(request.user):
-            messages.error(request, 'Hanya admin yang boleh memakai portal monolitik.')
-            return redirect('home')
-        return super().dispatch(request, *args, **kwargs)
-
     def get_queryset(self):
-        return Report.objects.exclude(status='DRAFT').order_by('-created_at')
+        if is_admin_user(self.request.user):
+            return Report.objects.exclude(status='DRAFT').order_by('-created_at')
+        # Citizen: lihat laporan sendiri + laporan publik (non-DRAFT)
+        return Report.objects.filter(
+            Q(reporter=self.request.user) | ~Q(status='DRAFT')
+        ).order_by('-created_at')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -143,12 +142,6 @@ class ReportDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'report'
     pk_url_kwarg = 'pk'
     login_url = 'login'
-
-    def dispatch(self, request, *args, **kwargs):
-        if not is_admin_user(request.user):
-            messages.error(request, 'Hanya admin yang boleh memakai portal monolitik.')
-            return redirect('home')
-        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         if is_admin_user(self.request.user):
@@ -165,12 +158,6 @@ class ReportCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('report_list')
     login_url = 'login'
 
-    def dispatch(self, request, *args, **kwargs):
-        if not is_admin_user(request.user):
-            messages.error(request, 'Hanya admin yang boleh memakai portal monolitik.')
-            return redirect('report_list')
-        return super().dispatch(request, *args, **kwargs)
-    
     def form_valid(self, form):
         form.instance.reporter = self.request.user
         messages.success(self.request, 'Laporan berhasil dibuat!')
@@ -187,8 +174,10 @@ class ReportUpdateView(LoginRequiredMixin, UpdateView):
         report = self.get_object()
 
         if not is_admin_user(request.user):
-            messages.error(request, 'Hanya admin yang boleh memakai portal monolitik.')
-            return redirect('report_detail', pk=report.id)
+            # Citizen hanya boleh edit laporan milik sendiri yang masih DRAFT
+            if report.reporter != request.user or report.status != 'DRAFT':
+                messages.error(request, 'Anda hanya bisa mengedit laporan draft milik Anda sendiri.')
+                return redirect('report_detail', pk=report.id)
 
         return super().dispatch(request, *args, **kwargs)
     
@@ -207,8 +196,10 @@ class ReportDeleteView(LoginRequiredMixin, DeleteView):
         report = self.get_object()
 
         if not is_admin_user(request.user):
-            messages.error(request, 'Hanya admin yang boleh memakai portal monolitik.')
-            return redirect('report_detail', pk=report.id)
+            # Citizen hanya boleh hapus laporan milik sendiri yang masih DRAFT
+            if report.reporter != request.user or report.status != 'DRAFT':
+                messages.error(request, 'Anda hanya bisa menghapus laporan draft milik Anda sendiri.')
+                return redirect('report_detail', pk=report.id)
 
         return super().dispatch(request, *args, **kwargs)
     
