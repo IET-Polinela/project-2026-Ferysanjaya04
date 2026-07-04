@@ -3,43 +3,324 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
+    <title>{{ title }} - Smart City Issue Reporting</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1A237E 0%, #3F51B5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sticker {
+            position: fixed;
+            width: 120px;
+            height: 120px;
+            font-size: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
+            animation: float 4s ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0px) rotate(-5deg);
+            }
+            50% {
+                transform: translateY(-30px) rotate(5deg);
+            }
+            100% {
+                transform: translateY(0px) rotate(-5deg);
+            }
+        }
+        
+        .sticker-left {
+            left: 20px;
+            top: 50px;
+            animation-delay: 0s;
+        }
+        
+        .sticker-right {
+            right: 20px;
+            bottom: 100px;
+            animation-delay: 1.5s;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(26, 35, 126, 0.4);
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1A237E 0%, #3F51B5 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #FF9800;
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
+        }
+        
+        .messages {
+            margin-bottom: 20px;
+        }
+        
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .field-error {
+            color: #721c24;
+            font-size: 12px;
+            background: #f8d7da;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin-top: 5px;
+            display: inline-block;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #1A237E 0%, #3F51B5 100%);
+            color: white;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(26, 35, 126, 0.4);
+        }
+        
+        .link-section {
+            margin-top: 30px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .link-section p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .link-section a {
+            color: #FF9800;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+        
+        .link-section a:hover {
+            color: #F57C00;
+        }
+        
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #FF9800;
+            font-size: 20px;
+            user-select: none;
+            background: none;
+            border: none;
+            padding: 5px 10px;
+        }
+        
+        .toggle-password:hover {
+            color: #F57C00;
+        }
+    </style>
 </head>
 <body>
-    <h2>Registrasi Citizen</h2>
-
-    {% if message %}
-        <p><strong>{{ message }}</strong></p>
-    {% endif %}
-
-    <form method="post" action="{{ form_action }}">
-        {% csrf_token %}
-
-        <div>
-            <label>Username</label><br>
-            <input type="text" name="username" required>
-            {% if errors.username %}<p>{{ errors.username.0 }}</p>{% endif %}
+    <div class="sticker sticker-left">😊</div>
+    <div class="sticker sticker-right">🚀</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>📝 {{ title }}</h1>
+            <p>Buat akun baru Smart City Issue Reporting</p>
         </div>
-
-        <div>
-            <label>Email</label><br>
-            <input type="email" name="email" required>
-            {% if errors.email %}<p>{{ errors.email.0 }}</p>{% endif %}
+        
+        <div class="content">
+            {% if message %}
+                <div class="messages">
+                    <div class="alert {% if success %}alert-success{% else %}alert-error{% endif %}">
+                        {{ message }}
+                    </div>
+                </div>
+            {% endif %}
+            
+            <form method="post" action="{{ form_action }}">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" name="username" id="username" class="form-control" placeholder="Masukkan username" required>
+                    {% if errors.username %}
+                        <span class="field-error">{{ errors.username.0 }}</span>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" id="email" class="form-control" placeholder="email@contoh.com" required>
+                    {% if errors.email %}
+                        <span class="field-error">{{ errors.email.0 }}</span>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" name="password" id="password" class="form-control" placeholder="Minimal 6 karakter" required>
+                        <button type="button" class="toggle-password" data-target="password">👁️</button>
+                    </div>
+                    {% if errors.password %}
+                        <span class="field-error">{{ errors.password.0 }}</span>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="password_confirm">Konfirmasi Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" name="password_confirm" id="password_confirm" class="form-control" placeholder="Ketik ulang password" required>
+                        <button type="button" class="toggle-password" data-target="password_confirm">👁️</button>
+                    </div>
+                    {% if errors.password_confirm %}
+                        <span class="field-error">{{ errors.password_confirm.0 }}</span>
+                    {% endif %}
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn btn-submit">Daftar</button>
+                </div>
+            </form>
+            
+            <div class="link-section">
+                <p>Sudah punya akun?</p>
+                <a href="/login/">Login sekarang →</a>
+            </div>
         </div>
-
-        <div>
-            <label>Password</label><br>
-            <input type="password" name="password" required>
-            {% if errors.password %}<p>{{ errors.password.0 }}</p>{% endif %}
-        </div>
-
-        <div>
-            <label>Konfirmasi Password</label><br>
-            <input type="password" name="password_confirm" required>
-            {% if errors.password_confirm %}<p>{{ errors.password_confirm.0 }}</p>{% endif %}
-        </div>
-
-        <button type="submit">Daftar</button>
-    </form>
+    </div>
+    
+    <script>
+        const toggleButtons = document.querySelectorAll('.toggle-password');
+        
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('data-target');
+                const passwordInput = document.getElementById(targetId);
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    this.textContent = '🙈';
+                } else {
+                    passwordInput.type = 'password';
+                    this.textContent = '👁️';
+                }
+            });
+        });
+    </script>
 </body>
 </html>

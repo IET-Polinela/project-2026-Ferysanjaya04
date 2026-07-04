@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib import messages
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -33,13 +34,9 @@ class RegisterView(APIView):
                     status=status.HTTP_201_CREATED,
                 )
 
-            return render(request, 'register.html', {
-                'title': 'Register',
-                'form_action': '/auth/register/',
-                'success': True,
-                'message': 'User berhasil didaftarkan sebagai Citizen.',
-                'errors': {},
-            })
+            # Redirect ke halaman login jika sukses
+            messages.success(request, 'Registrasi berhasil! Silakan login.')
+            return redirect('login')
 
         if request.content_type and 'application/json' in request.content_type:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
