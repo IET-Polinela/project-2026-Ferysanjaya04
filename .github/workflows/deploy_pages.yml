@@ -22,12 +22,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup GitHub Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
+
+      - name: Prepare static site for Pages
+        run: |
+          mkdir -p _site
+          rsync -av --exclude node_modules --exclude playwright --exclude test-results --exclude .git --exclude .github smartcity_citizen_spa_23758041/ _site/
 
       - name: Upload frontend files
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./smartcity_citizen_spa_23758041
+          path: ./_site
+          include-hidden-files: true
 
       - name: Deploy to GitHub Pages
         id: deployment
