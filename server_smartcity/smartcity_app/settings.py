@@ -31,8 +31,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',  
-    'drf_spectacular',  
-    'django_scalar',
+    'drf_spectacular',
    
     # App yang dibuat di Lab 6
     'usermanagement_23758041',
@@ -82,11 +81,11 @@ WSGI_APPLICATION = 'smartcity_app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'smartcity_db',
-        'USER': 'postgres',
-        'PASSWORD': 'fery123',
+        'NAME': 'db_mhs02',
+        'USER': 'user_mhs02',
+        'PASSWORD': 'mhs02',
         'HOST': 'localhost',
-        'PORT': '5433',
+        'PORT': '5432',
     }
 }
 
