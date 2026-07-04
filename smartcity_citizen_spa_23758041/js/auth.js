@@ -82,18 +82,12 @@ function setupRegisterForm() {
         }
 
         try {
-            // Kirim ke endpoint /api/register/ di backend publik (samakan BASE_URL dengan API lain)
-            const response = await fetch('http://103.151.63.85:8002/api/register/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: username,
-                    email: email,
-                    password: password,
-                    password_confirm: passwordConfirm
-                })
+            // Kirim ke endpoint auth register yang benar di backend Django
+            const response = await requestAPI('/auth/register/', 'POST', {
+                username: username,
+                email: email,
+                password: password,
+                password_confirm: passwordConfirm
             });
 
             if (response.ok) {
