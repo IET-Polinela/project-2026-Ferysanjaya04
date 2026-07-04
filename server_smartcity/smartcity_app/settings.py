@@ -160,6 +160,20 @@ REST_FRAMEWORK = {
 # ==============================================================================
 CORS_ALLOW_ALL_ORIGINS = True  # Mengizinkan semua domain untuk mengakses API
 
+CSRF_TRUSTED_ORIGINS = [
+    'http://103.151.63.85:8002',
+    'http://103.151.63.85:9002',
+    'http://localhost:8000',
+    'http://localhost:8002',
+    'http://localhost:9002',
+    'http://127.0.0.1:8000',
+    'http://127.0.0.1:8002',
+    'http://127.0.0.1:9002',
+]
+
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 SPECTACULAR_SETTINGS = {

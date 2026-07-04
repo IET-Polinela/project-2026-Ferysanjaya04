@@ -1,13 +1,18 @@
+from django.shortcuts import render
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-# Import RegisterSerializer yang sudah kita buat sebelumnya di usermanagement
 from .serializers import RegisterSerializer
 
 class RegisterView(APIView):
-    # Mengizinkan siapa saja (bahkan user yang belum login) untuk mengakses endpoint registrasi ini
     permission_classes = [AllowAny]
+
+    def get(self, request):
+        return render(request, 'register.html', {
+            'title': 'Register',
+            'form_action': '/auth/register/'
+        })
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -15,9 +20,9 @@ class RegisterView(APIView):
             serializer.save()
             return Response(
                 {
-                    "message": "User berhasil didaftarkan sebagai Citizen.",
-                    "user": serializer.data
-                }, 
-                status=status.HTTP_201_CREATED
+                    'message': 'User berhasil didaftarkan sebagai Citizen.',
+                    'user': serializer.data,
+                },
+                status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
