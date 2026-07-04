@@ -27,7 +27,7 @@ class ReportViewSet(viewsets.ModelViewSet):
         tab = self.request.query_params.get('tab')
 
         if self.is_admin_user(user):
-            return Report.objects.exclude(status='DRAFT').order_by('-updated_at')
+            return Report.objects.all().order_by('-updated_at')
 
         if tab == 'feed':
             return Report.objects.exclude(status='DRAFT').order_by('-updated_at')

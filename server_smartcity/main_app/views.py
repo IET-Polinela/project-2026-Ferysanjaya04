@@ -24,7 +24,7 @@ def is_admin_user(user):
 
 def home(request):
     if request.user.is_authenticated and is_admin_user(request.user):
-        reports = Report.objects.exclude(status='DRAFT')
+        reports = Report.objects.all()
     elif request.user.is_authenticated:
         reports = Report.objects.filter(Q(reporter=request.user) | ~Q(status='DRAFT'))
     else:
@@ -54,7 +54,7 @@ def report_search(request):
         return HttpResponseForbidden()
 
     query = request.GET.get('q', '')
-    reports = Report.objects.exclude(status='DRAFT')
+    reports = Report.objects.all()
     if query:
         reports = reports.filter(
             Q(title__icontains=query) |
@@ -125,7 +125,7 @@ class ReportListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         if is_admin_user(self.request.user):
-            return Report.objects.exclude(status='DRAFT').order_by('-created_at')
+            return Report.objects.all().order_by('-created_at')
         # Citizen: lihat laporan sendiri + laporan publik (non-DRAFT)
         return Report.objects.filter(
             Q(reporter=self.request.user) | ~Q(status='DRAFT')
@@ -145,7 +145,7 @@ class ReportDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         if is_admin_user(self.request.user):
-            return Report.objects.exclude(status='DRAFT')
+            return Report.objects.all()
 
         return Report.objects.filter(
             Q(reporter=self.request.user) | ~Q(status='DRAFT')
@@ -173,11 +173,15 @@ class ReportUpdateView(LoginRequiredMixin, UpdateView):
     def dispatch(self, request, *args, **kwargs):
         report = self.get_object()
 
-        if not is_admin_user(request.user):
-            # Citizen hanya boleh edit laporan milik sendiri yang masih DRAFT
-            if report.reporter != request.user or report.status != 'DRAFT':
-                messages.error(request, 'Anda hanya bisa mengedit laporan draft milik Anda sendiri.')
-                return redirect('report_detail', pk=report.id)
+        # Admin TIDAK boleh edit laporan (spek: ❌ Edit draft)
+        if is_admin_user(request.user):
+            messages.error(request, 'Admin tidak dapat mengedit laporan.')
+            return redirect('report_detail', pk=report.id)
+
+        # Citizen hanya boleh edit laporan milik sendiri yang masih DRAFT
+        if report.reporter != request.user or report.status != 'DRAFT':
+            messages.error(request, 'Anda hanya bisa mengedit laporan draft milik Anda sendiri.')
+            return redirect('report_detail', pk=report.id)
 
         return super().dispatch(request, *args, **kwargs)
     
@@ -195,11 +199,15 @@ class ReportDeleteView(LoginRequiredMixin, DeleteView):
     def dispatch(self, request, *args, **kwargs):
         report = self.get_object()
 
-        if not is_admin_user(request.user):
-            # Citizen hanya boleh hapus laporan milik sendiri yang masih DRAFT
-            if report.reporter != request.user or report.status != 'DRAFT':
-                messages.error(request, 'Anda hanya bisa menghapus laporan draft milik Anda sendiri.')
-                return redirect('report_detail', pk=report.id)
+        # Admin TIDAK boleh hapus laporan (spek: ❌ Hapus draft)
+        if is_admin_user(request.user):
+            messages.error(request, 'Admin tidak dapat menghapus laporan.')
+            return redirect('report_detail', pk=report.id)
+
+        # Citizen hanya boleh hapus laporan milik sendiri yang masih DRAFT
+        if report.reporter != request.user or report.status != 'DRAFT':
+            messages.error(request, 'Anda hanya bisa menghapus laporan draft milik Anda sendiri.')
+            return redirect('report_detail', pk=report.id)
 
         return super().dispatch(request, *args, **kwargs)
     

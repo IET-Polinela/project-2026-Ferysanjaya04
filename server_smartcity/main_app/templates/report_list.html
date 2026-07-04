@@ -10,10 +10,12 @@
     <a href="/reports/add/" class="btn btn-primary mb-3">+ Buat Laporan Baru</a>
 {% endif %}
 
+{% if request.user.is_staff or request.user.is_admin %}
 <div class="mb-3">
     <label for="searchInput" class="form-label fw-bold">Cari Laporan</label>
     <input type="search" id="searchInput" class="form-control" placeholder="Cari judul, lokasi, atau deskripsi">
 </div>
+{% endif %}
 
 {% if reports %}
 <div class="table-responsive">
