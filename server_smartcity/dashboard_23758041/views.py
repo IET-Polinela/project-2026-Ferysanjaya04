@@ -51,7 +51,7 @@ def search_report(request):
     else:
         reports = Report.objects.all()
 
-    data = list(reports.values('id', 'title', 'status'))
+    data = list(reports.values('id', 'title', 'status', 'category'))
 
     return JsonResponse(data, safe=False)
 
