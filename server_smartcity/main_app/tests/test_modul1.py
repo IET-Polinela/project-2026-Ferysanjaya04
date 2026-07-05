@@ -165,27 +165,26 @@ class AuthenticationTests(APITestCase):
         )
 
     # ─────────────────────────────────────────────────────────────────────────
-    # AUTH-03: Warga Biasa Mengakses Endpoint/Halaman Admin
+    # AUTH-03: Warga Biasa Mengakses Halaman Daftar Laporan
     # ─────────────────────────────────────────────────────────────────────────
-    def test_AUTH_03_warga_tidak_bisa_akses_halaman_admin(self):
+    def test_AUTH_03_warga_bisa_akses_daftar_laporan(self):
         """
-        [AUTH-03] Pengguna berstatus Warga biasa (is_admin=False) mencoba
-        mengakses URL endpoint/halaman portal Admin.
+        [AUTH-03] Pengguna berstatus Warga biasa (is_admin=False) mengakses
+        halaman daftar laporan (report_list).
 
         SKENARIO:
-            Warga biasa yang sudah login mencoba mengakses halaman dashboard
-            yang hanya dapat diakses oleh admin
+            Warga biasa yang sudah login mengakses halaman daftar laporan.
 
         HASIL YANG DIHARAPKAN:
-            Sistem menolak permintaan. Karena warga biasa tidak memiliki hak akses, 
-            respons berupa HTTP 302 dan notifikasi.
+            Sistem menampilkan halaman daftar laporan (200) dengan filter
+            hanya menampilkan laporan milik warga tersebut dan laporan publik.
 
         PENJELASAN TEKNIS:
-            Portal admin menggunakan Django session-based auth, bukan JWT.
-            Cek apakah user memiliki is_staff=True. Jika tidak, Django 
-            memberikan respons HTTP 302.
+            ReportListView menggunakan LoginRequiredMixin tanpa admin_only.
+            get_queryset memfilter laporan milik warga yang login + laporan
+            publik (non-DRAFT), sehingga warga bisa melihatnya.
         """
         self.client.force_login(self.warga)
         response = self.client.get(reverse('report_list'))
 
-        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

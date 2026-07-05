@@ -120,6 +120,16 @@ function handleRouting() {
     // Membaca hash URL aktif saat ini, jika kosong default mengarah ke '#login'
     const hash = window.location.hash || '#login';
     
+    // 🔐 AUTH GUARD: Proteksi halaman dashboard dari akses tanpa token
+    if (hash === '#dashboard') {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            // Redirect ke login jika tidak ada token
+            window.location.hash = '#login';
+            return;
+        }
+    }
+    
     // LAB 12: Render navbar dinamis berdasarkan rute
     const navMenusContainer = document.getElementById('nav-menus');
     if (hash === '#dashboard') {

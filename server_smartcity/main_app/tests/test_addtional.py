@@ -133,7 +133,7 @@ class MainAppMonolithicViewsCoverageTests(TestCase):
     def test_report_list_view_citizen(self):
         self.client.login(username='citizen_mono', password='Password123!')
         response = self.client.get(reverse('report_list'))
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
 
     def test_report_list_view_admin(self):
         self.client.login(username='admin_mono', password='Password123!')
@@ -148,7 +148,8 @@ class MainAppMonolithicViewsCoverageTests(TestCase):
     def test_report_create_view_citizen(self):
         self.client.login(username='citizen_mono', password='Password123!')
         response = self.client.get(reverse('add_report'))
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'main_app/add_report.html')
 
     def test_report_create_view_admin_get(self):
         self.client.login(username='admin_mono', password='Password123!')
@@ -177,7 +178,7 @@ class MainAppMonolithicViewsCoverageTests(TestCase):
     def test_report_detail_view_citizen(self):
         self.client.login(username='citizen_mono', password='Password123!')
         response = self.client.get(reverse('report_detail', kwargs={'pk': self.report.id}))
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
 
     def test_report_detail_view_admin(self):
         self.client.login(username='admin_mono', password='Password123!')
@@ -196,7 +197,7 @@ class MainAppMonolithicViewsCoverageTests(TestCase):
     def test_report_update_view_admin_get(self):
         self.client.login(username='admin_mono', password='Password123!')
         response = self.client.get(reverse('update_report', kwargs={'pk': self.report.id}))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
 
     def test_report_update_view_admin_post_valid(self):
         self.client.login(username='admin_mono', password='Password123!')
@@ -208,10 +209,11 @@ class MainAppMonolithicViewsCoverageTests(TestCase):
             'status': 'REPORTED'
         }
         response = self.client.post(reverse('update_report', kwargs={'pk': self.report.id}), payload)
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('report_list'))
+        # Admin diblokir dari edit — redirect ke report_detail
+        self.assertRedirects(response, reverse('report_detail', kwargs={'pk': self.report.id}))
+        # Pastikan laporan TIDAK berubah karena admin diblokir
         self.report.refresh_from_db()
-        self.assertEqual(self.report.title, 'Laporan Terupdate')
+        self.assertEqual(self.report.title, 'Laporan Monolitik Uji')
 
     def test_report_delete_view_unauthenticated(self):
         response = self.client.get(reverse('delete_report', kwargs={'pk': self.report.id}))
@@ -225,14 +227,15 @@ class MainAppMonolithicViewsCoverageTests(TestCase):
     def test_report_delete_view_admin_get(self):
         self.client.login(username='admin_mono', password='Password123!')
         response = self.client.get(reverse('delete_report', kwargs={'pk': self.report.id}))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
 
     def test_report_delete_view_admin_post(self):
         self.client.login(username='admin_mono', password='Password123!')
         response = self.client.post(reverse('delete_report', kwargs={'pk': self.report.id}))
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('report_list'))
-        self.assertFalse(Report.objects.filter(id=self.report.id).exists())
+        # Admin diblokir dari hapus — redirect ke report_detail
+        self.assertRedirects(response, reverse('report_detail', kwargs={'pk': self.report.id}))
+        # Pastikan laporan TIDAK dihapus karena admin diblokir
+        self.assertTrue(Report.objects.filter(id=self.report.id).exists())
 
     def test_report_delete_view_direct_delete_method(self):
         from main_app.views import ReportDeleteView

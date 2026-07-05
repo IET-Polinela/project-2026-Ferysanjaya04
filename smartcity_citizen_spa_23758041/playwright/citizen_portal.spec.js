@@ -233,7 +233,7 @@ async function mockSPAApiUrl(page) {
         // [PENTING] Mencegah infinite loop: 
         // Jika request sudah benar mengarah ke localhost:8000, biarkan saja lewat.
         if (originalUrl.startsWith(BASE_URL)) {
-            return route.continue();
+            return route.fallback();
         }
 
         // Parsing URL asli menggunakan objek URL bawaan JavaScript
@@ -243,8 +243,11 @@ async function mockSPAApiUrl(page) {
         // urlObj.search akan mengambil query string (misal: "?search=jalan") jika ada
         const newUrl = `${BASE_URL}${urlObj.pathname}${urlObj.search}`;
 
-        // Lanjutkan request dengan URL yang sudah dibelokkan ke localhost
-        await route.continue({ url: newUrl });
+        // Gunakan route.fallback() agar handler route lain (misal mock 401) 
+        // bisa menangani request ini TERLEBIH DAHULU sebelum request dikirim ke server.
+        // Berbeda dengan route.continue(), route.fallback() memberikan kesempatan
+        // ke handler route yang terdaftar setelahnya untuk memproses request.
+        await route.fallback({ url: newUrl });
     });
 }
 
@@ -292,9 +295,6 @@ test.describe('Modul 1: Otorisasi & Sesi (AUTH-04, AUTH-05, AUTH-06)', () => {
 
         // 2. Bersihkan localStorage untuk memastikan state bersih
         await clearAuthTokens(page);
-
-        // 3. Setup route interceptor agar API calls diarahkan ke localhost
-        await mockSPAApiUrl(page);
     });
 
     // =========================================================================
@@ -422,9 +422,7 @@ test.describe('Modul 1: Otorisasi & Sesi (AUTH-04, AUTH-05, AUTH-06)', () => {
         //
         // -------------------------------------------------------------------
 
-        // Hapus interceptor URL sebelumnya yang meredirect ke localhost
-        // Agar mock kita yang prioritas
-        await page.unroute('http://103.151.63.71:8013/api/**');
+        // -------------------------------------------------------------------
 
         // Mock SEMUA request ke API endpoint agar mengembalikan 401
         await page.route('**/api/**', async (route) => {
@@ -528,8 +526,6 @@ test.describe('Modul 1: Otorisasi & Sesi (AUTH-04, AUTH-05, AUTH-06)', () => {
         // -------------------------------------------------------------------
         // Karena kedua token expired, server pasti menolak. Kita mock
         // agar test tidak bergantung pada koneksi server yang sebenarnya.
-        await page.unroute('http://103.151.63.71:8013/api/**');
-
         await page.route('**/api/**', async (route) => {
             await route.fulfill({
                 status: 401,
@@ -840,17 +836,8 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
         // LANGKAH 1: Siapkan environment (navigasi ke SPA dan setup mock)
         // -------------------------------------------------------------------
         await page.goto(SPA_URL);
-        await mockSPAApiUrl(page);
-
-        // -------------------------------------------------------------------
-        // LANGKAH 2: Simulasi login dengan menyimpan token
-        // -------------------------------------------------------------------
-        // Untuk test ini, kita perlu berada dalam state "login" agar bisa
-        // mengakses dashboard. Kita gunakan mock API untuk token dan data.
-        // -------------------------------------------------------------------
 
         // Hapus route interceptor sebelumnya
-        await page.unroute('http://103.151.63.71:8013/api/**');
 
         // Buat data mock: 25 laporan dummy untuk simulasi pagination
         const mockReports = [];
@@ -989,9 +976,6 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
         // -------------------------------------------------------------------
         await page.goto(SPA_URL);
 
-        // Hapus route interceptor sebelumnya
-        await page.unroute('http://103.151.63.71:8013/api/**');
-
         // Mock semua API calls agar tidak gagal
         await page.route('**/api/**', async (route) => {
             // Untuk endpoint report, kembalikan data kosong
@@ -1091,7 +1075,6 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
         // LANGKAH 1: Setup environment
         // -------------------------------------------------------------------
         await page.goto(SPA_URL);
-        await page.unroute('http://103.151.63.71:8013/api/**');
 
         // Variabel untuk tracking apakah POST draft berhasil
         let draftSubmitted = false;

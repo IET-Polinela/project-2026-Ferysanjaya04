@@ -1,4 +1,4 @@
-const BASE_URL = ""  // Kosong karena SPA dan backend satu server (Nginx)
+const BASE_URL = "http://localhost:8000"  // Gunakan URL absolut agar fetch bekerja dari file:// SPA
 
 // Fungsi universal untuk fetch API ke Backend Django
 async function requestAPI(endpoint, method = 'GET', bodyData = null) {
