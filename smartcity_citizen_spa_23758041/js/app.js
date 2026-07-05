@@ -441,6 +441,62 @@ window.renderList = function(reports, tab) {
     }).join('');
 }
 
+// ===== FUNGSI UNTUK HALAMAN PUBLIK (tanpa login) =====
+/**
+ * loadPublicFeed()
+ * Mengambil 10 laporan publik terbaru dari API (tanpa autentikasi)
+ * Endpoint: /api/report/public-feed/
+ */
+window.loadPublicFeed = async function() {
+    try {
+        const response = await fetch(`${BASE_URL}/api/report/public-feed/`);
+        
+        if (response.ok) {
+            const reports = await response.json();
+            const container = document.getElementById('publicFeedContainer');
+            
+            if (!reports || reports.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p class="small mt-2">Belum ada laporan dari warga.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = reports.map(report => `
+                <div class="border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="fw-bold text-dark mb-1">${report.title}</h6>
+                        <span class="badge bg-secondary">${report.status ? report.status.replace(/_/g, ' ') : ''}</span>
+                    </div>
+                    <p class="text-muted small mb-1">${report.description}</p>
+                    <div class="d-flex gap-3">
+                        <small class="text-secondary"><i class="bi bi-tag"></i> ${report.category}</small>
+                        <small class="text-secondary"><i class="bi bi-geo-alt"></i> ${report.location}</small>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            document.getElementById('publicFeedContainer').innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-exclamation-triangle fs-1"></i>
+                    <p class="small mt-2">Gagal memuat laporan. Pastikan server backend aktif.</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading public feed:', error);
+        document.getElementById('publicFeedContainer').innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-cloud-exclamation fs-1"></i>
+                <p class="small mt-2">Gagal terhubung ke server.</p>
+            </div>
+        `;
+    }
+}
+
 /**
  * renderPagination(totalPages, currentPage, tab)
  * Render tombol navigasi halaman

@@ -1,5 +1,6 @@
 from django.db.models import Q
 from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema_view, extend_schema 
 from .models import Report
@@ -13,6 +14,16 @@ from .serializers import ReportSerializer
  #  partial_update=extend_schema(exclude=True),
  #   destroy=extend_schema(exclude=True),
 #)
+
+# ===== PUBLIC FEED: Tidak perlu login =====
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def public_feed(request):
+    """Mengembalikan laporan publik (non-DRAFT) tanpa perlu autentikasi"""
+    reports = Report.objects.exclude(status='DRAFT').order_by('-updated_at')[:10]
+    serializer = ReportSerializer(reports, many=True, context={'request': request})
+    return Response(serializer.data)
+
 
 class ReportViewSet(viewsets.ModelViewSet):
     queryset = Report.objects.all()

@@ -430,6 +430,12 @@
             <div class="sidebar">
                 <a href="/about/">ℹ️ About</a>
                 <a href="/contacts/">📞 Contacts</a>
+                {% if user.is_authenticated %}
+                <hr style="border-color: rgba(255,255,255,0.2); width: 100%;">
+                <a href="/dashboard/" style="background: rgba(255,152,0,0.2); border-color: #FF9800;">
+                    📊 Dashboard Admin
+                </a>
+                {% endif %}
             </div>
         </div>
     </div>

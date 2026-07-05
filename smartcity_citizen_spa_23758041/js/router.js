@@ -1,5 +1,38 @@
 // 1. Konfigurasi Objek Rute Halaman menggunakan Template Literal Backtick (`)
 const routes = {
+    // Halaman publik yang muncul saat pertama akses (tanpa login)
+    '#public': `
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-8">
+                <div class="text-center mb-5">
+                    <i class="bi bi-buildings-fill text-primary" style="font-size: 4rem;"></i>
+                    <h2 class="fw-bold mt-3 text-dark">Selamat Datang di Smart City Portal</h2>
+                    <p class="text-muted">Portal pelaporan warga untuk kota yang lebih baik</p>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <a href="#login" class="btn btn-primary btn-lg fw-bold px-4">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                        </a>
+                        <a href="#register" class="btn btn-outline-primary btn-lg fw-bold px-4">
+                            <i class="bi bi-person-plus me-2"></i>Daftar
+                        </a>
+                    </div>
+                </div>
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold text-primary mb-3">
+                            <i class="bi bi-newspaper me-2"></i>Laporan Terbaru Warga
+                        </h5>
+                        <div id="publicFeedContainer">
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-hourglass-split fs-3"></i>
+                                <p class="small mt-2">Memuat laporan terbaru...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `,
     '#login': `
         <div class="row justify-content-center mt-5">
             <div class="col-md-4 card shadow-sm border-0 p-4">
@@ -117,8 +150,8 @@ const routes = {
 
 // 2. Fungsi Utama Pengatur Rute Halaman secara Instan
 function handleRouting() {
-    // Membaca hash URL aktif saat ini, jika kosong default mengarah ke '#login'
-    const hash = window.location.hash || '#login';
+    // Membaca hash URL aktif saat ini, jika kosong default ke halaman publik
+    const hash = window.location.hash || '#public';
     
     // 🔐 AUTH GUARD: Proteksi halaman dashboard dari akses tanpa token
     if (hash === '#dashboard') {
@@ -149,7 +182,12 @@ function handleRouting() {
     }
     
     // Menyuntikkan template HTML ke dalam elemen main id 'app-content'
-    document.getElementById('app-content').innerHTML = routes[hash] || routes['#login'];
+    document.getElementById('app-content').innerHTML = routes[hash] || routes['#public'];
+    
+    // Jika rute saat ini adalah #public, load data laporan publik
+    if (hash === '#public' && typeof loadPublicFeed === 'function') {
+        loadPublicFeed();
+    }
     
     // Jika rute saat ini adalah #login, aktifkan penangkap form submit dari auth.js
     if (hash === '#login' && typeof setupLoginForm === 'function') {
