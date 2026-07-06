@@ -58,8 +58,8 @@ test.beforeEach(async ({ page }) => {
     await page.route('**/*', async (route) => {
         const url = route.request().url();
 
-        if (url.startsWith('http://103.151.63.85:8002/')) {
-            const newUrl = url.replace('http://103.151.63.85:8002', 'https://103.151.63.85:8002');
+        if (url.startsWith('http://103.151.63.83:8002/')) {
+            const newUrl = url.replace('http://103.151.63.83:8002', 'https://103.151.63.83:8002');
             console.log(`[Mixed Content Fix] ${url} → ${newUrl}`);
             await route.continue({ url: newUrl });
         } else {
@@ -82,7 +82,7 @@ test.beforeEach(async ({ page }) => {
 //     mungkin diblokir oleh kebijakan CORS browser. Disarankan menggunakan
 //     http-server atau Live Server extension.
 // ---------------------------------------------------------------------------
-const BASE_URL = 'http://103.151.63.85:8002';
+const BASE_URL = 'http://103.151.63.83:8002';
 
 // Path ke file SPA relatif terhadap direktori smartcity_citizen_spa_23758041
 // Gunakan file:// protocol untuk akses langsung ke file lokal.
@@ -120,7 +120,7 @@ const VALID_ACCESS_TOKEN    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90
 // CORS HEADERS UNTUK MOCK RESPONSE
 // =============================================================================
 // Karena SPA di-host di GitHub Pages (https://iet-polinela.github.io) dan
-// BASE_URL mengarah ke server produksi (http://103.151.63.85:8002), browser
+// BASE_URL mengarah ke server produksi (http://103.151.63.83:8002), browser
 // akan mengirim CORS preflight (OPTIONS). Semua mock response HARUS menyertakan
 // header CORS agar browser tidak memblokir response.
 // =============================================================================
