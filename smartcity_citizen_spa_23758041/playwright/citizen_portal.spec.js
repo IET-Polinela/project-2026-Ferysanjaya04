@@ -47,26 +47,17 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 
 // =========================================================================
-// MIXED CONTENT FIX - KHUSUS UNTUK IP BACKEND
+// MIXED CONTENT NOTE
 // =========================================================================
-// Karena SPA di-host di HTTPS (GitHub Pages) dan API di HTTP,
-// browser memblokir request. Ini adalah fix targeted.
+// Untuk testing dengan SPA_URL HTTP (localhost:8080), mixed content
+// tidak menjadi masalah karena page.route() dapat mencegat semua
+// request ke backend HTTP.
 //
-// Catatan: route harus didaftarkan pada setiap page yang digunakan oleh test,
-// sehingga sebelum tiap navigasi kita pasang interceptor pada page fixture.
-test.beforeEach(async ({ page }) => {
-    await page.route('**/*', async (route) => {
-        const url = route.request().url();
-
-        if (url.startsWith('http://103.151.63.85:8002/')) {
-            const newUrl = url.replace('http://103.151.63.85:8002', 'https://103.151.63.85:8002');
-            console.log(`[Mixed Content Fix] ${url} → ${newUrl}`);
-            await route.continue({ url: newUrl });
-        } else {
-            await route.continue();
-        }
-    });
-});
+// CATATAN: Jika ingin testing dengan SPA_URL HTTPS (GitHub Pages),
+// Chromium akan memblokir fetch dari HTTPS ke HTTP backend sebagai
+// mixed content. Playwright's page.route() dan --disable-web-security
+// tidak dapat mem-bypass blokade ini. Solusi: backend harus HTTPS.
+// =========================================================================
 
 // ---------------------------------------------------------------------------
 // KONSTANTA 
@@ -89,7 +80,7 @@ const BASE_URL = 'http://103.151.63.85:8002';
 // CATATAN: fetch API mungkin terblokir oleh CORS di file://,
 // tapi Playwright page.route() akan meng-intercept SEMUA request
 // sebelum mencapai server, sehingga mock API tetap berfungsi.
-const SPA_URL =  'http://192.168.56.1:8080'
+const SPA_URL =  'http://127.0.0.1:8080'
 
 // ---------------------------------------------------------------------------
 // KREDENSIAL TEST 
@@ -628,9 +619,8 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
     // =========================================================================
     test('UI-01: Chart.js di Dashboard Admin ter-render dengan benar', async ({ page }) => {
         // -------------------------------------------------------------------
-        // LANGKAH 1: Login ke portal admin
+        // LANGKAH 1: Login ke portal admin via server backend (103.151.63.85:8002)
         // -------------------------------------------------------------------
-        // Menggunakan helper function loginAdmin yang sudah kita buat
         await loginAdmin(page, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD);
 
         // -------------------------------------------------------------------
@@ -638,7 +628,7 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
         // -------------------------------------------------------------------
         await page.goto(`${BASE_URL}/dashboard/`);
 
-        // Tunggu halaman selesai dimuat sepenuhnya
+        // Tunggu Chart.js selesai dimuat dan chart instances terbuat
         await page.waitForLoadState('networkidle');
 
         // -------------------------------------------------------------------
@@ -724,12 +714,12 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
     // =========================================================================
     test('UI-02: Live Search pada daftar laporan admin berfungsi', async ({ page }) => {
         // -------------------------------------------------------------------
-        // LANGKAH 1: Login ke portal admin
+        // LANGKAH 1: Login ke portal admin via server backend (103.151.63.85:8002)
         // -------------------------------------------------------------------
         await loginAdmin(page, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD);
 
         // -------------------------------------------------------------------
-        // LANGKAH 2: Navigasi ke halaman daftar laporan (/reports/ via main_app urls)
+        // LANGKAH 2: Navigasi ke halaman daftar laporan
         // -------------------------------------------------------------------
         // Halaman ini berisi tabel semua laporan dan input pencarian.
         // URL /reports/ didefinisikan di main_app/urls.py
@@ -969,7 +959,25 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
         await page.goto(SPA_URL);
 
         // -------------------------------------------------------------------
-        // LANGKAH 2: Setup state login dan navigasi ke dashboard
+        // LANGKAH 2: Mock API untuk mencegah SPA redirect ke login
+        // -------------------------------------------------------------------
+        // SPA menggunakan BASE_URL = 'http://103.151.63.85:8002' di api.js.
+        // Token VALID_ACCESS_TOKEN palsu akan ditolak server produksi (401),
+        // menyebabkan SPA membersihkan localStorage dan redirect ke #login.
+        // Mock API response agar SPA tetap di dashboard.
+        page.on('requestfailed', req => console.log(`[UI-04] Request FAILED: ${req.url()}`));
+        await page.route(url => url.toString().includes('/api/'), async (route) => {
+            console.log(`[UI-04] Intercepted: ${route.request().url()}`);
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                headers: CORS_HEADERS,
+                body: JSON.stringify({ count: 0, results: [] })
+            });
+        });
+
+        // -------------------------------------------------------------------
+        // LANGKAH 3: Setup state login dan navigasi ke dashboard
         // -------------------------------------------------------------------
 
         // Simpan token agar bisa akses dashboard (sudah di origin SPA)
@@ -979,7 +987,7 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
         page.on('dialog', async (dialog) => await dialog.accept());
 
         // -------------------------------------------------------------------
-        // LANGKAH 3: Ganti hash ke #dashboard via evaluate (tanpa reload)
+        // LANGKAH 4: Ganti hash ke #dashboard via evaluate (tanpa reload)
         // -------------------------------------------------------------------
         await page.evaluate(() => { window.location.hash = '#dashboard'; });
 
@@ -988,15 +996,17 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
         await expect(btnBukaModal).toBeVisible({ timeout: 10000 });
 
         // -------------------------------------------------------------------
-        // LANGKAH 4: Verifikasi modal belum terlihat sebelum diklik
+        // LANGKAH 5: Verifikasi modal belum terlihat sebelum diklik
         // -------------------------------------------------------------------
         const reportModal = page.locator('#reportModal');
         await expect(reportModal).not.toBeVisible();
 
         // -------------------------------------------------------------------
-        // LANGKAH 5: Klik tombol "Buat Laporan Baru"
+        // LANGKAH 6: Klik tombol "Buat Laporan Baru"
         // -------------------------------------------------------------------
-        await btnBukaModal.click();
+        // Tunggu sejenak untuk memastikan SPA selesai re-render
+        await page.waitForTimeout(1000);
+        await page.locator('#btnBukaModal').click();
 
         // -------------------------------------------------------------------
         // LANGKAH 6: Tunggu dan verifikasi modal muncul
