@@ -16,6 +16,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
     steps:
       - name: Checkout repository
@@ -27,7 +29,8 @@ jobs:
       - name: Prepare static site for Pages
         run: |
           mkdir -p _site
-          rsync -av --exclude node_modules --exclude playwright --exclude test-results --exclude .git --exclude .github smartcity_citizen_spa_23758041/ _site/
+          touch _site/.nojekyll
+          rsync -av --delete --exclude node_modules --exclude playwright --exclude test-results --exclude .git --exclude .github smartcity_citizen_spa_23758041/ _site/
 
       - name: Upload frontend files
         uses: actions/upload-pages-artifact@v3
