@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8000"  // Server backend Django lokal
+const BASE_URL = "http://103.151.63.85:8002"  // Server backend Django lokal
 
 // Fungsi universal untuk fetch API ke Backend Django
 async function requestAPI(endpoint, method = 'GET', bodyData = null) {
