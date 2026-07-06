@@ -147,7 +147,8 @@ class ReportListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         if is_admin_user(self.request.user):
-            return Report.objects.all().order_by('-created_at')
+            # Admin hanya melihat laporan non-DRAFT
+            return Report.objects.exclude(status='DRAFT').order_by('-created_at')
         # Citizen: lihat laporan sendiri + laporan publik (non-DRAFT)
         return Report.objects.filter(
             Q(reporter=self.request.user) | ~Q(status='DRAFT')
@@ -167,7 +168,8 @@ class ReportDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         if is_admin_user(self.request.user):
-            return Report.objects.all()
+            # Admin hanya melihat laporan non-DRAFT
+            return Report.objects.exclude(status='DRAFT')
 
         return Report.objects.filter(
             Q(reporter=self.request.user) | ~Q(status='DRAFT')
