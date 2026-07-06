@@ -131,6 +131,12 @@ class MainAppMonolithicViewsCoverageTests(TestCase):
         response = self.client.get(reverse('home'))
         self.assertRedirects(response, reverse('dashboard'))
 
+    def test_citizen_cannot_access_admin_dashboard(self):
+        self.client.login(username='citizen_mono', password='Password123!')
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('home'))
+
     def test_report_list_view_unauthenticated(self):
         response = self.client.get(reverse('report_list'))
         self.assertEqual(response.status_code, 302)
