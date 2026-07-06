@@ -160,8 +160,8 @@ REST_FRAMEWORK = {
 CORS_ALLOW_ALL_ORIGINS = True  # Mengizinkan semua domain untuk mengakses API
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://103.151.63.85:8002',
-    'http://103.151.63.85:9002',
+    'http://103.151.63.83:8002',
+    'http://103.151.63.83:9002',
     'http://localhost:8000',
     'http://localhost:8002',
     'http://localhost:9002',
