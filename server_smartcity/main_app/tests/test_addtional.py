@@ -89,6 +89,14 @@ class MainAppMonolithicViewsCoverageTests(TestCase):
             status='REPORTED',
             reporter=self.citizen
         )
+        self.draft_report = Report.objects.create(
+            title='Draft Rahasia Admin',
+            category='Lainnya',
+            description='Draft yang seharusnya tidak terlihat admin.',
+            location='Bandung',
+            status='DRAFT',
+            reporter=self.citizen
+        )
 
     def test_report_detail_api_valid(self):
         from main_app.views import report_detail_api
@@ -151,6 +159,17 @@ class MainAppMonolithicViewsCoverageTests(TestCase):
         response = self.client.get(reverse('report_list'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'main_app/report_list.html')
+
+    def test_admin_report_list_hides_draft_reports(self):
+        self.client.login(username='admin_mono', password='Password123!')
+        response = self.client.get(reverse('report_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Draft Rahasia Admin')
+
+    def test_admin_report_detail_hides_draft_reports(self):
+        self.client.login(username='admin_mono', password='Password123!')
+        response = self.client.get(reverse('report_detail', kwargs={'pk': self.draft_report.id}))
+        self.assertEqual(response.status_code, 404)
 
     def test_report_create_view_unauthenticated(self):
         response = self.client.get(reverse('add_report'))
