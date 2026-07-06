@@ -10,12 +10,21 @@ module.exports = defineConfig({
   reporter: 'list',
   use: {
     trace: 'on-first-retry',
-    baseURL: 'http://localhost:8000'
+    baseURL: 'http://localhost:8000',
+    ignoreHTTPSErrors: true,
   },
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] }
+      use: { 
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: [
+            '--disable-web-security',
+            '--ignore-certificate-errors'
+          ]
+        }
+      }
     }
   ]
 });

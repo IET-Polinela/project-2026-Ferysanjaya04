@@ -121,10 +121,15 @@ class MainAppMonolithicViewsCoverageTests(TestCase):
         response = self.client.get(reverse('report_search') + '?q=Monolitik')
         self.assertEqual(response.status_code, 200)
 
-    def test_home_view(self):
+    def test_home_view_requires_login(self):
         response = self.client.get(reverse('home'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'main_app/home.html')
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, f"{reverse('login')}?next={reverse('home')}")
+
+    def test_admin_home_redirects_to_dashboard(self):
+        self.client.login(username='admin_mono', password='Password123!')
+        response = self.client.get(reverse('home'))
+        self.assertRedirects(response, reverse('dashboard'))
 
     def test_report_list_view_unauthenticated(self):
         response = self.client.get(reverse('report_list'))

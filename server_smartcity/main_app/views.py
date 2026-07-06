@@ -7,8 +7,10 @@ from django.contrib import messages
 from django.db.models import Q
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.conf import settings
 
 # Import decorator custom kita
 from usermanagement_23758041.decorators import admin_only
@@ -20,16 +22,33 @@ def is_admin_user(user):
     return user.is_staff or getattr(user, 'is_admin', False)
 
 
+def get_post_login_redirect(request, default_name='home'):
+    redirect_to = request.POST.get('next') or request.GET.get('next')
+    if redirect_to and url_has_allowed_host_and_scheme(
+        redirect_to,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(redirect_to)
+
+    if request.user.is_authenticated and is_admin_user(request.user):
+        return redirect('dashboard')
+
+    return redirect(default_name)
+
+
 # --- FUNCTION BASED VIEWS ---
 
 def home(request):
-    if request.user.is_authenticated and is_admin_user(request.user):
-        reports = Report.objects.all()
-    elif request.user.is_authenticated:
-        reports = Report.objects.filter(Q(reporter=request.user) | ~Q(status='DRAFT'))
-    else:
-        reports = Report.objects.exclude(status='DRAFT')
+    if not request.user.is_authenticated:
+        login_url = reverse('login')
+        next_url = request.get_full_path()
+        return redirect(f'{login_url}?next={next_url}')
 
+    if is_admin_user(request.user):
+        return redirect('dashboard')
+
+    reports = Report.objects.filter(Q(reporter=request.user) | ~Q(status='DRAFT'))
     context = {
         'reports': reports,
         'total_reports': reports.count(),
@@ -76,7 +95,8 @@ def report_search(request):
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('home')
+        return get_post_login_redirect(request, 'home')
+
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -85,12 +105,14 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
-                return redirect('home')
+                return get_post_login_redirect(request, 'home')
             else:
                 messages.error(request, 'Username atau password salah!')
     else:
         form = LoginForm()
-    return render(request, 'login.html', {'form': form})
+
+    next_url = request.GET.get('next') or request.POST.get('next')
+    return render(request, 'login.html', {'form': form, 'next': next_url})
 
 def logout_view(request):
     logout(request)

@@ -34,7 +34,7 @@
 //   - Storage: localStorage menyimpan 'access_token', 'refresh_token', 'username'
 // =============================================================================
 
-// ---------------------------------------------------------------------------
+// =========================================================================
 // IMPORT & SETUP
 // ---------------------------------------------------------------------------
 // Mengimpor fungsi 'test' dan 'expect' dari library Playwright.
@@ -45,6 +45,28 @@
 const { test, expect } = require('@playwright/test');
 const path = require('path');
 const { pathToFileURL } = require('url');
+
+// =========================================================================
+// MIXED CONTENT FIX - KHUSUS UNTUK IP BACKEND
+// =========================================================================
+// Karena SPA di-host di HTTPS (GitHub Pages) dan API di HTTP,
+// browser memblokir request. Ini adalah fix targeted.
+//
+// Catatan: route harus didaftarkan pada setiap page yang digunakan oleh test,
+// sehingga sebelum tiap navigasi kita pasang interceptor pada page fixture.
+test.beforeEach(async ({ page }) => {
+    await page.route('**/*', async (route) => {
+        const url = route.request().url();
+
+        if (url.startsWith('http://103.151.63.85:8002/')) {
+            const newUrl = url.replace('http://103.151.63.85:8002', 'https://103.151.63.85:8002');
+            console.log(`[Mixed Content Fix] ${url} → ${newUrl}`);
+            await route.continue({ url: newUrl });
+        } else {
+            await route.continue();
+        }
+    });
+});
 
 // ---------------------------------------------------------------------------
 // KONSTANTA 
@@ -60,14 +82,14 @@ const { pathToFileURL } = require('url');
 //     mungkin diblokir oleh kebijakan CORS browser. Disarankan menggunakan
 //     http-server atau Live Server extension.
 // ---------------------------------------------------------------------------
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'http://103.151.63.85:8002';
 
-// Path ke file SPA relatif terhadap folder server_smartcity
-// Gunakan salah satu opsi di bawah ini sesuai environment Anda:
-//   Opsi 1 (Live Server): 'http://127.0.0.1:5500/smartcity_citizen_spa/index.html'
-//   Opsi 2 (http-server):  'http://localhost:8080/index.html'
-//   Opsi 3 (file://):      'file:///C:/Users/.../smartcity_citizen_spa/index.html'
-const SPA_URL = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
+// Path ke file SPA relatif terhadap direktori smartcity_citizen_spa_23758041
+// Gunakan file:// protocol untuk akses langsung ke file lokal.
+// CATATAN: fetch API mungkin terblokir oleh CORS di file://,
+// tapi Playwright page.route() akan meng-intercept SEMUA request
+// sebelum mencapai server, sehingga mock API tetap berfungsi.
+const SPA_URL =  'http://192.168.56.1:8080'
 
 // ---------------------------------------------------------------------------
 // KREDENSIAL TEST 
@@ -75,10 +97,10 @@ const SPA_URL = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 // Kredensial untuk akun test yang sudah terdaftar di database Django.
 // Pastikan akun ini ada sebelum menjalankan test, atau gunakan mock API.
 // ---------------------------------------------------------------------------
-const TEST_CITIZEN_USERNAME = 'fery';
-const TEST_CITIZEN_PASSWORD = '123';
-const TEST_ADMIN_USERNAME  = 'admin';
-const TEST_ADMIN_PASSWORD  = '123';
+const TEST_CITIZEN_USERNAME = 'dikin';
+const TEST_CITIZEN_PASSWORD = 'dikin123';
+const TEST_ADMIN_USERNAME  = 'admin1';
+const TEST_ADMIN_PASSWORD  = 'admin123';
 
 // ---------------------------------------------------------------------------
 // FAKE JWT TOKENS UNTUK TESTING
@@ -93,6 +115,20 @@ const TEST_ADMIN_PASSWORD  = '123';
 const EXPIRED_ACCESS_TOKEN  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjAwMDAwMDAwLCJpYXQiOjE2MDAwMDAwMDAsImp0aSI6ImZha2VfYWNjZXNzX2lkIiwidXNlcl9pZCI6MX0.fake_signature_for_testing';
 const EXPIRED_REFRESH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYwMDAwMDAwMCwiaWF0IjoxNjAwMDAwMDAwLCJqdGkiOiJmYWtlX3JlZnJlc2hfaWQiLCJ1c2VyX2lkIjoxfQ.fake_signature_for_testing';
 const VALID_ACCESS_TOKEN    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjo5OTk5OTk5OTk5LCJpYXQiOjE2MDAwMDAwMDAsImp0aSI6InZhbGlkX2FjY2Vzc19pZCIsInVzZXJfaWQiOjF9.fake_valid_signature';
+
+// =============================================================================
+// CORS HEADERS UNTUK MOCK RESPONSE
+// =============================================================================
+// Karena SPA di-host di GitHub Pages (https://iet-polinela.github.io) dan
+// BASE_URL mengarah ke server produksi (http://103.151.63.85:8002), browser
+// akan mengirim CORS preflight (OPTIONS). Semua mock response HARUS menyertakan
+// header CORS agar browser tidak memblokir response.
+// =============================================================================
+const CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+};
 
 // =============================================================================
 // FUNGSI HELPER 
@@ -414,23 +450,17 @@ test.describe('Modul 1: Otorisasi & Sesi (AUTH-04, AUTH-05, AUTH-06)', () => {
         // -------------------------------------------------------------------
         // LANGKAH 2: Mock respons API untuk mensimulasikan 401 Unauthorized
         // -------------------------------------------------------------------
-        // page.route() dapat menginterceptsi request HTTP
-        // dan memberikan respons buatan (mock response).
-        //
-        // Pola URL '**\/api/report/**' akan mencocokkan semua request
-        // ke endpoint report API (termasuk query parameters).
-        //
-        // -------------------------------------------------------------------
+        // Catat semua request untuk debugging
+        const requests = [];
+        page.on('request', req => { requests.push(req.url()); });
+        page.on('requestfailed', req => console.log(`[AUTH-05] Request FAILED: ${req.url()} - ${req.failure()?.errorText}`));
 
-        // -------------------------------------------------------------------
-
-        // Mock SEMUA request ke API endpoint agar mengembalikan 401
-        await page.route('**/api/**', async (route) => {
-            // route.fulfill() langsung mengembalikan respons tanpa mengirim
-            // request ke server asli. Ini sangat berguna untuk testing.
+        await page.route(url => url.toString().includes('/api/'), async (route) => {
+            console.log(`[AUTH-05] Intercepted: ${route.request().url()}`);
             await route.fulfill({
                 status: 401,
                 contentType: 'application/json',
+                headers: CORS_HEADERS,
                 body: JSON.stringify({
                     detail: 'Given token not valid for any token type',
                     code: 'token_not_valid'
@@ -441,51 +471,28 @@ test.describe('Modul 1: Otorisasi & Sesi (AUTH-04, AUTH-05, AUTH-06)', () => {
         // -------------------------------------------------------------------
         // LANGKAH 3: Handle dialog alert yang muncul dari interceptor api.js
         // -------------------------------------------------------------------
-        // Kode api.js menampilkan alert('Sesi Anda telah habis...') saat
-        // menerima respons 401. Playwright akan error jika dialog tidak ditangani.
-        //
-        // page.on('dialog') mendaftarkan event handler untuk dialog browser
-        // (alert, confirm, prompt). Kita harus accept/dismiss dialog.
         page.on('dialog', async (dialog) => {
-            // Verifikasi pesan alert sesuai dengan yang ada di api.js
             console.log(`[AUTH-05] Dialog muncul: "${dialog.message()}"`);
             await dialog.accept();
         });
 
         // -------------------------------------------------------------------
-        // LANGKAH 4: Navigasi ke #dashboard (router.js akan mengizinkan karena
-        //            ada token di localStorage, meskipun token sudah expired)
+        // LANGKAH 4: Ganti hash ke #dashboard via evaluate (tanpa reload)
+        //            Route mock & localStorage tetap terpelihara.
         // -------------------------------------------------------------------
-        // Auth guard di router.js HANYA memeriksa keberadaan token (ada/tidak),
-        // BUKAN validitas token. Validitas dicek saat API call dilakukan.
-        //
-        await page.goto(`${SPA_URL}#dashboard`);
+        await page.evaluate(() => { window.location.hash = '#dashboard'; });
 
-        // Tunggu hingga dashboard ter-render dan API call dilakukan
-        // Saat dashboard dimuat, setupDashboardEvents() dan loadDashboardData()
-        // akan dipanggil, yang akan memicu requestAPI() → mendapat 401 → redirect
-        //
-        await page.waitForTimeout(2000);
-
-        // -------------------------------------------------------------------
-        // LANGKAH 5: Verifikasi redirect ke #login setelah 401
-        // -------------------------------------------------------------------
-        await page.waitForFunction(
-            () => window.location.hash === '#login',
-            null,
-            { timeout: 10000 }
-        );
+        // Tunggu redirect ke #login — cari form login sebagai indikator
+        await page.waitForSelector('#loginForm', { state: 'visible', timeout: 15000 });
 
         await expect(page).toHaveURL(/#login/);
 
         // -------------------------------------------------------------------
-        // LANGKAH 6: Verifikasi localStorage sudah dibersihkan oleh interceptor
+        // LANGKAH 5: Verifikasi localStorage sudah dibersihkan oleh interceptor
         // -------------------------------------------------------------------
-        // Kode api.js baris 30: localStorage.clear()
         const tokenAfter = await page.evaluate(() => localStorage.getItem('access_token'));
         const refreshAfter = await page.evaluate(() => localStorage.getItem('refresh_token'));
 
-        // Token harus null setelah interceptor membersihkan localStorage
         expect(tokenAfter).toBeNull();
         expect(refreshAfter).toBeNull();
 
@@ -515,7 +522,6 @@ test.describe('Modul 1: Otorisasi & Sesi (AUTH-04, AUTH-05, AUTH-06)', () => {
         // -------------------------------------------------------------------
         await setupAuthTokens(page, EXPIRED_ACCESS_TOKEN, EXPIRED_REFRESH_TOKEN);
 
-        // Verifikasi awal: kedua token tersimpan
         const accessBefore = await page.evaluate(() => localStorage.getItem('access_token'));
         const refreshBefore = await page.evaluate(() => localStorage.getItem('refresh_token'));
         expect(accessBefore).not.toBeNull();
@@ -524,12 +530,14 @@ test.describe('Modul 1: Otorisasi & Sesi (AUTH-04, AUTH-05, AUTH-06)', () => {
         // -------------------------------------------------------------------
         // LANGKAH 2: Mock API untuk menolak semua request dengan 401
         // -------------------------------------------------------------------
-        // Karena kedua token expired, server pasti menolak. Kita mock
-        // agar test tidak bergantung pada koneksi server yang sebenarnya.
-        await page.route('**/api/**', async (route) => {
+        page.on('requestfailed', req => console.log(`[AUTH-06] Request FAILED: ${req.url()}`));
+
+        await page.route(url => url.toString().includes('/api/'), async (route) => {
+            console.log(`[AUTH-06] Intercepted: ${route.request().url()}`);
             await route.fulfill({
                 status: 401,
                 contentType: 'application/json',
+                headers: CORS_HEADERS,
                 body: JSON.stringify({
                     detail: 'Token is invalid or expired',
                     code: 'token_not_valid'
@@ -546,38 +554,26 @@ test.describe('Modul 1: Otorisasi & Sesi (AUTH-04, AUTH-05, AUTH-06)', () => {
         });
 
         // -------------------------------------------------------------------
-        // LANGKAH 4: Coba akses dashboard
+        // LANGKAH 4: Ganti hash ke #dashboard via evaluate (tanpa reload)
         // -------------------------------------------------------------------
-        await page.goto(`${SPA_URL}#dashboard`);
+        await page.evaluate(() => { window.location.hash = '#dashboard'; });
 
-        // Tunggu proses redirect terjadi
-        await page.waitForTimeout(2000);
-
-        // -------------------------------------------------------------------
-        // LANGKAH 5: Verifikasi TIGA hal sekaligus (Triple Assertion)
-        // -------------------------------------------------------------------
-
-        // 5a. URL harus mengarah ke #login
-        await page.waitForFunction(
-            () => window.location.hash === '#login',
-            null,
-            { timeout: 10000 }
-        );
+        // Tunggu redirect ke #login — cari form login
+        await page.waitForSelector('#loginForm', { state: 'visible', timeout: 15000 });
         await expect(page).toHaveURL(/#login/);
 
-        // 5b. localStorage harus bersih (access_token harus null)
+        // -------------------------------------------------------------------
+        // LANGKAH 5: Verifikasi localStorage bersih
+        // -------------------------------------------------------------------
         const accessAfter = await page.evaluate(() => localStorage.getItem('access_token'));
         expect(accessAfter).toBeNull();
 
-        // 5c. localStorage harus bersih (refresh_token harus null)
         const refreshAfter = await page.evaluate(() => localStorage.getItem('refresh_token'));
         expect(refreshAfter).toBeNull();
 
-        // 5d. Verifikasi username juga ikut terhapus
         const usernameAfter = await page.evaluate(() => localStorage.getItem('username'));
         expect(usernameAfter).toBeNull();
 
-        // 5e. Form login harus terlihat (verifikasi visual)
         await expect(page.locator('#loginForm')).toBeVisible({ timeout: 5000 });
 
         console.log('[AUTH-06] ✅ Kedua token expired: localStorage bersih, redirect ke #login berhasil');
@@ -833,11 +829,13 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
     // =========================================================================
     test('UI-03: Pagination Feed Kota — maks 10 kartu, kontrol pagination muncul', async ({ page }) => {
         // -------------------------------------------------------------------
-        // LANGKAH 1: Siapkan environment (navigasi ke SPA dan setup mock)
+        // LANGKAH 1: Navigasi ke SPA dulu agar localStorage available
         // -------------------------------------------------------------------
         await page.goto(SPA_URL);
 
-        // Hapus route interceptor sebelumnya
+        // -------------------------------------------------------------------
+        // LANGKAH 2: Siapkan environment (setup mock)
+        // -------------------------------------------------------------------
 
         // Buat data mock: 25 laporan dummy untuk simulasi pagination
         const mockReports = [];
@@ -855,16 +853,18 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
             });
         }
 
-        // Mock API endpoint untuk report list (feed tab, halaman 1)
-        await page.route('**/api/report/**', async (route) => {
-            const url = route.request().url();
+        // Debug: catat request yang gagal
+        page.on('requestfailed', req => console.log(`[UI-03] Request FAILED: ${req.url()}`));
 
-            if (url.includes('tab=feed') || url.includes('tab=my_reports')) {
-                // Ambil nomor halaman dari URL (default: 1)
+        // Mock API endpoint untuk report list — pakai function predicate
+        await page.route(url => url.toString().includes('/api/'), async (route) => {
+            const url = route.request().url();
+            console.log(`[UI-03] Intercepted: ${url}`);
+
+            if (url.includes('tab=feed') || url.includes('tab=my_reports') || url.includes('public-feed')) {
                 const pageMatch = url.match(/page=(\d+)/);
                 const pageNum = pageMatch ? parseInt(pageMatch[1]) : 1;
 
-                // Hitung subset data untuk halaman ini (10 per halaman)
                 const pageSize = 10;
                 const startIdx = (pageNum - 1) * pageSize;
                 const endIdx = startIdx + pageSize;
@@ -873,58 +873,54 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
                 await route.fulfill({
                     status: 200,
                     contentType: 'application/json',
+                    headers: CORS_HEADERS,
                     body: JSON.stringify({
-                        count: mockReports.length,   // Total: 25
-                        results: pageData,            // 10 per halaman
+                        count: mockReports.length,
+                        results: pageData,
                         next: endIdx < mockReports.length ? 'next_page_url' : null,
                         previous: pageNum > 1 ? 'prev_page_url' : null
                     })
                 });
             } else {
-                // Untuk endpoint lain, kembalikan respons kosong
                 await route.fulfill({
                     status: 200,
                     contentType: 'application/json',
+                    headers: CORS_HEADERS,
                     body: JSON.stringify({ count: 0, results: [] })
                 });
             }
         });
 
-        // Simpan token valid ke localStorage agar bisa akses dashboard
+        // Simpan token valid ke localStorage (sudah di origin SPA)
         await setupAuthTokens(page, VALID_ACCESS_TOKEN, EXPIRED_REFRESH_TOKEN);
 
         // Handle alert dialog (jika muncul)
         page.on('dialog', async (dialog) => await dialog.accept());
 
         // -------------------------------------------------------------------
-        // LANGKAH 3: Navigasi ke dashboard
+        // LANGKAH 3: Ganti hash ke #dashboard via evaluate (tanpa reload)
         // -------------------------------------------------------------------
-        await page.goto(`${SPA_URL}#dashboard`);
+        await page.evaluate(() => { window.location.hash = '#dashboard'; });
         await page.waitForSelector('#btnBukaModal', { state: 'visible', timeout: 10000 });
 
         // -------------------------------------------------------------------
         // LANGKAH 4: Klik tab "Feed Kota (Publik)"
         // -------------------------------------------------------------------
-        // Tab ini ada di router.js (template #dashboard), id='tabFeedKota'
         const tabFeedKota = page.locator('#tabFeedKota');
         await expect(tabFeedKota).toBeVisible();
         await tabFeedKota.click();
 
-        // Tunggu data dimuat (AJAX call + render)
         await page.waitForTimeout(2000);
 
         // -------------------------------------------------------------------
         // LANGKAH 5: Hitung jumlah kartu laporan di listContainer
         // -------------------------------------------------------------------
-        // Setiap laporan dirender sebagai <div class="col"> di dalam #listContainer
-        // (lihat app.js renderList() baris 109: card.className = 'col')
         const listContainer = page.locator('#listContainer');
         await expect(listContainer).toBeVisible();
 
         const reportCards = listContainer.locator('.col');
         const cardCount = await reportCards.count();
 
-        // Assertion: jumlah kartu tidak boleh lebih dari 10
         expect(cardCount).toBeLessThanOrEqual(10);
         expect(cardCount).toBeGreaterThan(0);
 
@@ -933,16 +929,12 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
         // -------------------------------------------------------------------
         // LANGKAH 6: Verifikasi kontrol pagination muncul
         // -------------------------------------------------------------------
-        // Karena ada 25 laporan dan 10 per halaman, harus ada 3 halaman.
-        // renderPagination() (app.js baris 230) akan membuat navigasi halaman.
         const paginationContainer = page.locator('#paginationContainer');
         await expect(paginationContainer).toBeVisible();
 
-        // Verifikasi ada tombol navigasi halaman (page numbers, prev, next)
         const paginationButtons = paginationContainer.locator('.page-item');
         const paginationCount = await paginationButtons.count();
 
-        // Harus ada minimal 3 tombol: Sebelumnya, 1, 2, 3, Selanjutnya = 5 tombol
         expect(paginationCount).toBeGreaterThanOrEqual(3);
 
         console.log(`[UI-03] ✅ Pagination terverifikasi: ${cardCount} kartu, ${paginationCount} tombol navigasi`);
@@ -972,70 +964,53 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
     // =========================================================================
     test('UI-04: Klik tombol Buat Laporan → modal #reportModal muncul', async ({ page }) => {
         // -------------------------------------------------------------------
-        // LANGKAH 1: Setup state login dan mock API
+        // LANGKAH 1: Navigasi ke SPA dulu agar localStorage available
         // -------------------------------------------------------------------
         await page.goto(SPA_URL);
 
-        // Mock semua API calls agar tidak gagal
-        await page.route('**/api/**', async (route) => {
-            // Untuk endpoint report, kembalikan data kosong
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify({ count: 0, results: [] })
-            });
-        });
+        // -------------------------------------------------------------------
+        // LANGKAH 2: Setup state login dan navigasi ke dashboard
+        // -------------------------------------------------------------------
 
-        // Simpan token agar bisa akses dashboard
+        // Simpan token agar bisa akses dashboard (sudah di origin SPA)
         await setupAuthTokens(page, VALID_ACCESS_TOKEN, EXPIRED_REFRESH_TOKEN);
 
         // Handle dialog alert (jika muncul)
         page.on('dialog', async (dialog) => await dialog.accept());
 
         // -------------------------------------------------------------------
-        // LANGKAH 2: Navigasi ke dashboard
+        // LANGKAH 3: Ganti hash ke #dashboard via evaluate (tanpa reload)
         // -------------------------------------------------------------------
-        await page.goto(`${SPA_URL}#dashboard`);
+        await page.evaluate(() => { window.location.hash = '#dashboard'; });
 
         // Tunggu tombol "Buat Laporan Baru" muncul
         const btnBukaModal = page.locator('#btnBukaModal');
         await expect(btnBukaModal).toBeVisible({ timeout: 10000 });
 
         // -------------------------------------------------------------------
-        // LANGKAH 3: Verifikasi modal belum terlihat sebelum diklik
+        // LANGKAH 4: Verifikasi modal belum terlihat sebelum diklik
         // -------------------------------------------------------------------
         const reportModal = page.locator('#reportModal');
-
-        // Modal awalnya memiliki class "modal fade" (tanpa "show")
-        // Sehingga tidak terlihat oleh pengguna
         await expect(reportModal).not.toBeVisible();
 
         // -------------------------------------------------------------------
-        // LANGKAH 4: Klik tombol "Buat Laporan Baru"
+        // LANGKAH 5: Klik tombol "Buat Laporan Baru"
         // -------------------------------------------------------------------
         await btnBukaModal.click();
 
         // -------------------------------------------------------------------
-        // LANGKAH 5: Tunggu dan verifikasi modal muncul
+        // LANGKAH 6: Tunggu dan verifikasi modal muncul
         // -------------------------------------------------------------------
-        // Bootstrap menambahkan class 'show' ke modal saat ditampilkan,
-        // dan mengubah style display dari 'none' ke 'block'.
-        //
-        // Kita gunakan toBeVisible() yang secara internal memeriksa apakah
-        // elemen memiliki ukuran > 0 dan tidak di-hidden.
-        //
         await expect(reportModal).toBeVisible({ timeout: 5000 });
 
-        // Verifikasi tambahan: cek class 'show' pada modal
         const hasShowClass = await reportModal.evaluate(
             (el) => el.classList.contains('show')
         );
         expect(hasShowClass).toBe(true);
 
         // -------------------------------------------------------------------
-        // LANGKAH 6: Verifikasi form dan elemen input ada di dalam modal
+        // LANGKAH 7: Verifikasi form dan elemen input ada di dalam modal
         // -------------------------------------------------------------------
-        // Form laporan harus memiliki semua field yang diperlukan
         await expect(page.locator('#reportForm')).toBeVisible();
         await expect(page.locator('#inputTitle')).toBeVisible();
         await expect(page.locator('#inputCategory')).toBeVisible();
@@ -1044,7 +1019,6 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
         await expect(page.locator('#btnDraft')).toBeVisible();
         await expect(page.locator('#btnSubmit')).toBeVisible();
 
-        // Verifikasi judul modal
         const modalTitle = page.locator('#reportModalLabel');
         await expect(modalTitle).toContainText('Buat Laporan Baru');
 
@@ -1076,27 +1050,23 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
         // -------------------------------------------------------------------
         await page.goto(SPA_URL);
 
-        // Variabel untuk tracking apakah POST draft berhasil
-        let draftSubmitted = false;
+        // Debug: catat request yang gagal
+        page.on('requestfailed', req => console.log(`[UI-05] Request FAILED: ${req.url()}`));
 
-        // Mock API endpoint dengan respons yang sesuai
-        await page.route('**/api/report/**', async (route) => {
+        // Mock API endpoint — pakai function predicate
+        await page.route(url => url.toString().includes('/api/'), async (route) => {
             const method = route.request().method();
             const url = route.request().url();
+            console.log(`[UI-05] Intercepted: ${method} ${url}`);
 
-            if (method === 'POST') {
-                // -----------------------------------------------------------
-                // Mock untuk POST /api/report/ (membuat laporan baru)
-                // -----------------------------------------------------------
-                draftSubmitted = true;
-
-                // Ambil data dari request body untuk verifikasi
+            if (method === 'POST' && url.includes('/api/report/')) {
                 const postData = route.request().postDataJSON();
                 console.log(`[UI-05] POST received: ${JSON.stringify(postData)}`);
 
                 await route.fulfill({
-                    status: 201, // 201 Created
+                    status: 201,
                     contentType: 'application/json',
+                    headers: CORS_HEADERS,
                     body: JSON.stringify({
                         id: 99,
                         title: postData?.title || 'Test Draft',
@@ -1109,14 +1079,10 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
                     })
                 });
             } else if (method === 'GET' && url.includes('page_size=1000')) {
-                // -----------------------------------------------------------
-                // Mock untuk GET /api/report/?tab=my_reports&page_size=1000
-                // (digunakan oleh loadSummaryStats() untuk menghitung badge)
-                //
-                // -----------------------------------------------------------
                 await route.fulfill({
                     status: 200,
                     contentType: 'application/json',
+                    headers: CORS_HEADERS,
                     body: JSON.stringify({
                         count: 1,
                         results: [{
@@ -1131,25 +1097,29 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
                         }]
                     })
                 });
-            } else {
-                // Mock default: kembalikan list kosong
+            } else if (url.includes('/api/report/')) {
                 await route.fulfill({
                     status: 200,
                     contentType: 'application/json',
+                    headers: CORS_HEADERS,
+                    body: JSON.stringify({ count: 0, results: [] })
+                });
+            } else {
+                await route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    headers: CORS_HEADERS,
                     body: JSON.stringify({ count: 0, results: [] })
                 });
             }
         });
 
-        // Setup token
+        // Setup token (sudah di origin SPA)
         await setupAuthTokens(page, VALID_ACCESS_TOKEN, EXPIRED_REFRESH_TOKEN);
 
         // -------------------------------------------------------------------
         // LANGKAH 2: Handle dialog alert
         // -------------------------------------------------------------------
-        // app.js menampilkan alert setelah berhasil simpan draft:
-        //   alert('Laporan berhasil disimpan sebagai DRAFT')
-        //
         let alertMessage = '';
         page.on('dialog', async (dialog) => {
             alertMessage = dialog.message();
@@ -1158,34 +1128,21 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
         });
 
         // -------------------------------------------------------------------
-        // LANGKAH 3: Navigasi ke dashboard dan buka modal
+        // LANGKAH 3: Ganti hash ke #dashboard via evaluate (tanpa reload)
         // -------------------------------------------------------------------
-        await page.goto(`${SPA_URL}#dashboard`);
+        await page.evaluate(() => { window.location.hash = '#dashboard'; });
         await page.waitForSelector('#btnBukaModal', { state: 'visible', timeout: 10000 });
 
-        // Klik tombol buka modal
         await page.locator('#btnBukaModal').click();
 
-        // Tunggu modal muncul
         await expect(page.locator('#reportModal')).toBeVisible({ timeout: 5000 });
 
         // -------------------------------------------------------------------
         // LANGKAH 4: Isi form laporan dengan data test
         // -------------------------------------------------------------------
-        // Mengisi setiap field form satu per satu
-
-        // 4a. Judul Laporan / Report Title
         await page.locator('#inputTitle').fill('AC Mati di Lab CPS 1');
-
-        // 4b. Kategori / Category
-        //     Ini adalah <select>, kita gunakan selectOption() bukan fill()
         await page.locator('#inputCategory').selectOption('Infrastruktur');
-
-        // 4c. Lokasi Kejadian / Incident Location
         await page.locator('#inputLocation').fill('Gedung Lab Analisis, Lantai 2');
-
-        // 4d. Deskripsi / Description
-        //     Ini adalah <textarea>, fill() juga bisa digunakan
         await page.locator('#inputDescription').fill(
             'Unit AC di ruang Lab CPS 1 tidak berfungsi sejak tadi pagi. ' +
             'Suhu ruangan sangat panas dan mengganggu kegiatan praktikum.'
@@ -1194,40 +1151,29 @@ test.describe('Modul 5: Interaktivitas UI (UI-01 through UI-06)', () => {
         // -------------------------------------------------------------------
         // LANGKAH 5: Klik tombol "Simpan Draft" (#btnDraft)
         // -------------------------------------------------------------------
-        // Tombol ini akan memanggil kirimLaporan('DRAFT') di app.js
         await page.locator('#btnDraft').click();
 
-        // Tunggu proses POST selesai dan modal menutup
         await page.waitForTimeout(2000);
 
         // -------------------------------------------------------------------
-        // LANGKAH 6: Verifikasi modal tertutup setelah submit berhasil
+        // LANGKAH 6: Verifikasi modal tertutup
         // -------------------------------------------------------------------
-        // Setelah berhasil, app.js memanggil reportModalInstance.hide()
         const reportModal = page.locator('#reportModal');
         await expect(reportModal).not.toBeVisible({ timeout: 5000 });
 
         // -------------------------------------------------------------------
-        // LANGKAH 7: Verifikasi notifikasi sukses muncul
+        // LANGKAH 7: Verifikasi notifikasi sukses
         // -------------------------------------------------------------------
-        // Kita sudah menangkap alert message di event handler di atas
-        //
-        // app.js baris 387: alert('Laporan berhasil disimpan sebagai DRAFT')
         expect(alertMessage).toContain('berhasil');
 
         // -------------------------------------------------------------------
-        // LANGKAH 8: Verifikasi badge Draf di summaryStats terupdate
+        // LANGKAH 8: Verifikasi badge Draf
         // -------------------------------------------------------------------
-        // Setelah simpan berhasil, loadDashboardData() dipanggil yang
-        // memanggil loadSummaryStats(). Badge Draf harus menunjukkan angka > 0.
-        //
         await page.waitForTimeout(2000);
 
         const summaryStats = page.locator('#summaryStats');
         await expect(summaryStats).toBeVisible();
 
-        // Cek bahwa ada setidaknya satu badge yang menunjukkan angka > 0
-        // Badge Draf adalah badge pertama di summaryStats
         const draftBadge = summaryStats.locator('.badge.bg-secondary').first();
         const draftCountText = await draftBadge.textContent();
         const draftCount = parseInt(draftCountText, 10);
